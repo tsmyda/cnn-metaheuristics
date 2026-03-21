@@ -11,7 +11,7 @@ def run_random_search(
     budget: int,
     epochs: int,
     device: str,
-    seed: int = 42,
+    seed: int = 7777,
 ) -> Tuple[Dict[str, Any] | None, pd.DataFrame]:
     results = []
 

@@ -8,7 +8,7 @@ from src.utils import ensure_dir, set_seed
 
 
 def main():
-    set_seed(42)
+    set_seed(7777)
 
     dataset_name = "FashionMNIST"
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -30,7 +30,7 @@ def main():
         dataset_name=dataset_name,
         epochs=epochs,
         device=device,
-        seed=42,
+        seed=7777,
     )
 
     best_random, df_random = run_random_search(
@@ -38,7 +38,7 @@ def main():
         budget=random_budget,
         epochs=epochs,
         device=device,
-        seed=42,
+        seed=7777,
     )
 
     df_all = pd.concat([df_manual, df_random], ignore_index=True)

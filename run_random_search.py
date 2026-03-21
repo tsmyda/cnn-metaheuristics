@@ -8,7 +8,7 @@ from src.utils import ensure_dir, set_seed
 
 
 def main():
-    set_seed(42)
+    set_seed(7777)
 
     dataset_name = "FashionMNIST"
     budget = 10
@@ -28,7 +28,7 @@ def main():
         budget=budget,
         epochs=epochs,
         device=device,
-        seed=42,
+        seed=7777,
     )
 
     out_csv = "results/tables/random_search_results.csv"

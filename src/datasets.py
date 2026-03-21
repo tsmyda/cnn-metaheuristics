@@ -10,7 +10,7 @@ def get_dataset_loaders(
     batch_size: int,
     val_split: float = 0.1,
     num_workers: int = 2,
-    seed: int = 42,
+    seed: int = 7777,
 ) -> Tuple[DataLoader, DataLoader, DataLoader, int, int, int]:
     dataset_name = dataset_name.lower()
 

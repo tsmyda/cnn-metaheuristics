@@ -68,7 +68,7 @@ def run_manual_search(
     dataset_name: str,
     epochs: int,
     device: str,
-    seed: int = 42,
+    seed: int = 7777,
 ) -> Tuple[Dict[str, Any] | None, pd.DataFrame]:
     results = []
 

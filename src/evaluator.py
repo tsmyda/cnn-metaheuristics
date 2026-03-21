@@ -7,7 +7,7 @@ from torch.optim import Adam
 from src.datasets import get_dataset_loaders
 from src.model import TunableCNN
 from src.train import train_one_epoch, evaluate
-from src.utils import count_parameters, set_seed
+from src.utils import count_parameters, set_torch_seed
 
 
 def evaluate_config(
@@ -15,11 +15,11 @@ def evaluate_config(
     dataset_name: str,
     epochs: int,
     device: str,
-    seed: int = 42,
+    seed: int = 7777,
     val_split: float = 0.1,
     num_workers: int = 2,
 ) -> Dict[str, Any]:
-    set_seed(seed)
+    set_torch_seed(seed)
     start_time = time.time()
 
     train_loader, val_loader, test_loader, image_channels, image_size, num_classes = get_dataset_loaders(
