@@ -175,8 +175,8 @@ def main():
 
     save_method_summary(df, "results/tables/method_summary.csv")
     save_best_configs(df, "results/tables/best_configs.csv")
-    save_time_to_best(df, "results/tables/time_to_best.csv")
-    plot_time_to_best(df, "results/figures/time_to_best_all_methods.png")
+    time_to_best_df = save_time_to_best(df, "results/tables/time_to_best.csv")
+    plot_time_to_best(time_to_best_df, "results/figures/time_to_best_all_methods.png")
 
     print(f"Saved results to {out_csv}")
 
