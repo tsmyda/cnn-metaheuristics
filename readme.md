@@ -13,8 +13,7 @@
 From the project root:
 
 ```bash
-python scripts/train_baseline.py
-python scripts/run_random_search.py
-python scripts/run_compare_baselines.py
 python scripts/run_all_methods.py
 ```
+
+Then choose supported dataset and heuristics.

@@ -64,6 +64,31 @@ def get_dataset_loaders(
         image_size = 32
         num_classes = 10
 
+    elif dataset_name == "cifar100":
+        train_transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+        test_transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+
+        train_full = datasets.CIFAR100(
+            root="data",
+            train=True,
+            download=True,
+            transform=train_transform,
+        )
+        test_set = datasets.CIFAR100(
+            root="data",
+            train=False,
+            download=True,
+            transform=test_transform,
+        )
+
+        image_channels = 3
+        image_size = 32
+        num_classes = 100
+
     else:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 

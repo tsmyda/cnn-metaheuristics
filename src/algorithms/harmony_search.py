@@ -122,7 +122,7 @@ def run_harmony_search(
             best_config = copy.deepcopy(config)
 
         print(
-            f"[HS:init] {idx+1:02d}/{harmony_memory_size} | "
+            f"[HS] {idx+1:02d}/{harmony_memory_size} | "
             f"val_acc={score:.4f} | best={best_score:.4f}"
         )
 
