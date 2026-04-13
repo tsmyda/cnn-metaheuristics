@@ -22,7 +22,6 @@ from src.plots import (
     plot_best_so_far,
     plot_time_to_best,
     plot_hyperparam_metric_correlation_heatmaps_by_method,
-    plot_hyperparam_val_accuracy_correlation,
 )
 from src.report_tables import save_method_summary, save_best_configs, save_time_to_best
 from src.utils import ensure_dir, set_seed
@@ -185,10 +184,6 @@ def main():
     plot_hyperparam_metric_correlation_heatmaps_by_method(
         df,
         "results/figures/hyperparam_metric_correlations",
-    )
-    plot_hyperparam_val_accuracy_correlation(
-        df,
-        "results/figures/hyperparam_val_accuracy_correlation.png",
     )
 
     print(f"Saved results to {out_csv}")

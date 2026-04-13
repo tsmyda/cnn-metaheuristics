@@ -165,51 +165,6 @@ def plot_hyperparam_metric_correlation_heatmaps_by_method(
         plt.close()
 
 
-def plot_hyperparam_val_accuracy_correlation(
-    df: pd.DataFrame,
-    output_path: str,
-) -> None:
-    hyperparams = [
-        "learning_rate",
-        "batch_size",
-        "num_blocks",
-        "filters_1",
-        "filters_2",
-        "filters_3",
-        "kernel_size",
-        "dropout",
-        "dense_units",
-    ]
-
-    available_hparams = [col for col in hyperparams if col in df.columns]
-    if "val_accuracy" not in df.columns or not available_hparams:
-        return
-
-    corr_series = (
-        df[available_hparams + ["val_accuracy"]]
-        .corr(numeric_only=True)["val_accuracy"]
-        .drop(labels=["val_accuracy"], errors="ignore")
-        .dropna()
-        .sort_values(key=lambda s: s.abs(), ascending=False)
-    )
-
-    if corr_series.empty:
-        return
-
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-
-    plt.figure(figsize=(9, 5))
-    colors = ["#2a9d8f" if value >= 0 else "#e76f51" for value in corr_series.values]
-    plt.bar(corr_series.index, corr_series.values, color=colors)
-    plt.axhline(0.0, color="black", linewidth=1)
-    plt.xticks(rotation=35, ha="right")
-    plt.ylabel("Correlation with val_accuracy")
-    plt.title("Hyperparameter Impact on Validation Accuracy")
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=200)
-    plt.close()
-    
-
 def save_summary_table(csv_path: str, output_path: str) -> None:
     df = pd.read_csv(csv_path)
 
