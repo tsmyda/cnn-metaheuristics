@@ -47,16 +47,3 @@ def save_time_to_best(df: pd.DataFrame, output_path: str) -> pd.DataFrame:
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(output_path, index=False)
     return out
-
-def plot_time_to_best(df: pd.DataFrame, output_path: str) -> None:
-
-    plt.figure(figsize=(10, 6))
-    plt.bar(df["method"], df["time_of_best_sec"], color="skyblue")
-    plt.xlabel("Method")
-    plt.ylabel("Time to Best (sec)")
-    plt.title("Time to Best Validation Accuracy by Method")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig(output_path)
-    plt.close()
-    

@@ -18,8 +18,13 @@ from src.algorithms import (
     run_harmony_search,
 )
 
-from src.plots import plot_best_so_far
-from src.report_tables import save_method_summary, save_best_configs, save_time_to_best, plot_time_to_best
+from src.plots import (
+    plot_best_so_far,
+    plot_time_to_best,
+    plot_hyperparam_metric_correlation_heatmaps_by_method,
+    plot_hyperparam_val_accuracy_correlation,
+)
+from src.report_tables import save_method_summary, save_best_configs, save_time_to_best
 from src.utils import ensure_dir, set_seed
 
 
@@ -177,6 +182,14 @@ def main():
     save_best_configs(df, "results/tables/best_configs.csv")
     time_to_best_df = save_time_to_best(df, "results/tables/time_to_best.csv")
     plot_time_to_best(time_to_best_df, "results/figures/time_to_best_all_methods.png")
+    plot_hyperparam_metric_correlation_heatmaps_by_method(
+        df,
+        "results/figures/hyperparam_metric_correlations",
+    )
+    plot_hyperparam_val_accuracy_correlation(
+        df,
+        "results/figures/hyperparam_val_accuracy_correlation.png",
+    )
 
     print(f"Saved results to {out_csv}")
 
