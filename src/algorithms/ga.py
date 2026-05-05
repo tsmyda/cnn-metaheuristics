@@ -68,6 +68,9 @@ def run_ga(
         df: DataFrame with results of all evaluations
     """
 
+    # make Python-random deterministic for reproducibility
+    random.seed(seed)
+
     population = [sample_config() for _ in range(population_size)]
 
     results = []

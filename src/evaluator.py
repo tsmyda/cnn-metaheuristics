@@ -2,7 +2,7 @@ import time
 from typing import Dict, Any
 
 import torch
-from torch.optim import Adam
+from torch.optim import Adam, SGD, AdamW
 
 from src.datasets import get_dataset_loaders
 from src.model import TunableCNN
@@ -43,7 +43,16 @@ def evaluate_config(
         dense_units=config["dense_units"],
     ).to(device)
 
-    optimizer = Adam(model.parameters(), lr=config["learning_rate"])
+    # respect optimizer and weight_decay from config (if present)
+    opt_name = config.get("optimizer", "adam")
+    weight_decay = float(config.get("weight_decay", 0.0))
+
+    if opt_name == "sgd":
+        optimizer = SGD(model.parameters(), lr=config["learning_rate"], momentum=0.9, weight_decay=weight_decay)
+    elif opt_name == "adamw":
+        optimizer = AdamW(model.parameters(), lr=config["learning_rate"], weight_decay=weight_decay)
+    else:
+        optimizer = Adam(model.parameters(), lr=config["learning_rate"], weight_decay=weight_decay)
 
     best_val_acc = 0.0
     best_val_loss = float("inf")

@@ -1,70 +1,62 @@
-// Raport z projektu: CNN - optymalizacja hiperparametrów i architektury
-// Kompilacja: `typst compile report.typ report.pdf`
-
-#set document(
+#let project_report(
   title: "Metaheurystyczne strojenie hiperparametrów CNN",
-  author: "Jakub Grześ, Tomasz Smyda",
-)
+  subtitle: "",
+  authors: (),
+  stage: 1,
+  date: none,
+  body
+) = {
+  set document(title: title, author: authors)
+  set text(font: "Linux Libertine", lang: "pl", size: 11pt)
+  set heading(numbering: "1.")
 
-#set page(
-  paper: "a4",
-  margin: (x: 2.2cm, y: 2.5cm),
-  numbering: "1",
-  number-align: center,
-)
+  set par(justify: true)
+  
+  set page(
+    margin: (top: 2cm, bottom: 2cm, x: 2.5cm),
+    numbering: "1",
+    header: context {
+      if counter(page).get().first() > 1 {
+        align(right)[#text(size: 8pt, fill: gray)[#title - #authors.join(", ")]]
+      }
+    }
+  )
 
-#set text(
-  font: ("New Computer Modern", "Liberation Serif"),
-  size: 10.5pt,
-  lang: "pl",
-)
-
-#set par(
-  justify: true,
-  leading: 0.62em,
-  first-line-indent: 1em,
-)
-
-#set heading(numbering: "1.1")
-
-#show heading.where(level: 1): it => block(above: 1.2em, below: 0.8em)[
-  #set text(size: 14pt, weight: "bold")
-  #counter(heading).display() #h(0.6em) #it.body
-]
-
-#show heading.where(level: 2): it => block(above: 1em, below: 0.6em)[
-  #set text(size: 12pt, weight: "bold")
-  #counter(heading).display() #h(0.5em) #it.body
-]
-
-#show figure.caption: it => [
-  #set text(size: 9.5pt)
-  *#it.supplement #context it.counter.display(it.numbering).* #it.body
-]
-
-// ============ STRONA TYTUŁOWA ============
-
-#align(center)[
-  #v(2cm)
-  #text(size: 18pt, weight: "bold")[
-    Metaheurystyczne strojenie hiperparametrów \
-    konwolucyjnych sieci neuronowych
+  align(center)[
+    #grid(
+      columns: (1fr, 1fr),
+      align(left)[#text(size: 10pt)[AGH University of Science and Technology \ Kraków, Poland]],
+      align(right)[#text(size: 10pt)[Wydział Informatyki]]
+    )
+    #v(1em)
+    #text(size: 18pt, weight: "bold")[#title] \
+    #v(0.4em)
+    #text(size: 13pt, style: "italic")[#subtitle] \
+    #v(0.8em)
+    #text(size: 11pt)[
+      *Autorzy:* #authors.join(", ")
+    ]
+    #v(0.4em)
+    #if date != none [#date] else [#datetime.today().display()]
+    #v(0.2em)
+    #line(length: 100%, stroke: 0.5pt)
   ]
 
-  #v(0.4cm)
-  #text(size: 12pt)[
-    Porównanie GA, PSO, ACO i Harmony Search z wyszukiwaniem losowym i ręcznym \
-    na zbiorach FashionMNIST, CIFAR-10 i CIFAR-100
-  ]
+  body
 
-  #v(1.2cm)
-  #text(size: 11pt)[
-    Jakub Grześ, Tomasz Smyda \
-    #datetime.today().display("[day].[month].[year]")
-  ]
-]
+  v(2em)
+  line(length: 100%, stroke: 0.5pt)
+  v(0.5em)
+  bibliography("bibliography.bib", title: "Bibliografia", style: "ieee")
+}
 
-#v(1cm)
+#show: project_report.with(
+  title: "Metaheurystyczne strojenie hiperparametrów CNN",
+  subtitle: "Porównanie GA, PSO, ACO i Harmony Search z wyszukiwaniem losowym i ręcznym 
+    na zbiorach FashionMNIST, CIFAR-10 i CIFAR-100",
+  authors: ("Jakub Grześ", "Tomasz Smyda"),
+  stage: 3,
+)
 
 // ============ STRESZCZENIE ============
 
@@ -103,8 +95,7 @@ kategoryczna, jak i ciągła, a funkcja celu (jakość walidacyjna) jest
 zaszumiona i kosztowna do obliczenia, co czyni klasyczne wyszukiwanie siatkowe
 niepraktycznym.
 
-W literaturze zaproponowano wiele metaheurystyk do strojenia architektur CNN
-[1]. Celem niniejszego raportu jest empiryczne porównanie
+W literaturze zaproponowano wiele metaheurystyk do strojenia architektur CNN @optimization_cnn. Celem niniejszego raportu jest empiryczne porównanie
 wybranych algorytmów — GA, PSO, ACO, Harmony Search — w tej samej przestrzeni
 przeszukiwań, przy tym samym budżecie obliczeniowym, z dwoma prostymi punktami
 odniesienia: wyszukiwaniem ręcznym (kilka sensownych konfiguracji wybranych
@@ -459,13 +450,6 @@ pokazuje, że:
   co uzasadnia dwuetapowy pipeline: szybkie przeszukiwanie + retreining.
 
 #v(0.6cm)
-
-// ============ BIBLIOGRAFIA ============
-
-// = Bibliografia
-
-// #set par(first-line-indent: 0em, hanging-indent: 1.2em)
-// #set text(size: 9.5pt)
 
 // [1] Purnomo H.D., Gonsalves T., Mailoa E.,
 //   Santoso F.J., Pribadi M.R. _Metaheuristics Approach for Hyperparameter Tuning
