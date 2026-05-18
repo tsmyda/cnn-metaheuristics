@@ -45,6 +45,62 @@ def plot_time_to_best(df: pd.DataFrame, output_path: str) -> None:
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()
+
+def plot_time_to_best_combined(
+    dataset_to_df: dict[str, pd.DataFrame],
+    output_path: str,
+) -> None:
+
+    method_order = [
+        "manual_search",
+        "random_search",
+        "ga",
+        "pso",
+        "aco",
+        "harmony_search",
+    ]
+
+    pretty_names = {
+        "manual_search": "Manual",
+        "random_search": "Random",
+        "ga": "GA",
+        "pso": "PSO",
+        "aco": "ACO",
+        "harmony_search": "HS",
+    }
+
+    n_datasets = len(dataset_to_df)
+    fig, axes = plt.subplots(1, n_datasets, figsize=(5 * n_datasets, 4), sharey=True)
+
+    if n_datasets == 1:
+        axes = [axes]
+
+    for ax, (dataset_name, df) in zip(axes, dataset_to_df.items()):
+        plot_df = df.copy()
+
+        plot_df["method"] = pd.Categorical(
+            plot_df["method"],
+            categories=method_order,
+            ordered=True,
+        )
+        plot_df = plot_df.sort_values("method")
+
+        x_labels = [pretty_names[m] for m in plot_df["method"]]
+        y_values = plot_df["time_of_best_sec"]
+
+        ax.bar(x_labels, y_values)
+        ax.set_title(dataset_name)
+        ax.set_xlabel("Metoda")
+        ax.tick_params(axis="x", rotation=35)
+
+    axes[0].set_ylabel("Czas do najlepszego wyniku [s]")
+
+    fig.suptitle("Czas do osiągnięcia najlepszej dokładności walidacyjnej", fontsize=12)
+    plt.tight_layout()
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close()
     
 def plot_hparam_vs_accuracy(
     csv_path: str,
