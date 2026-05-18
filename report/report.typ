@@ -67,10 +67,12 @@
       optymalizację rojem cząstek (PSO), optymalizację kolonią mrówek (ACO) oraz
       wyszukiwanie harmoniczne (Harmony Search) -- z bazowymi metodami doboru
       hiperparametrów (wyszukiwanie ręczne i losowe) w zadaniu strojenia
-      konwolucyjnej sieci neuronowej. Eksperymenty przeprowadzono na trzech
-      standardowych zbiorach obrazów (FashionMNIST, CIFAR-10, CIFAR-100)
-      z jednakowym budżetem 20 pełnych ewaluacji (po 5 epok) oraz
-      20-epokowym dotrenowaniem najlepszej konfiguracji. 
+      konwolucyjnej sieci neuronowej. Eksperymenty przeprowadzono na trzech standardowych zbiorach obrazów
+      (FashionMNIST, CIFAR-10, CIFAR-100). Metody automatyczne porównano przy budżecie
+      20 ewaluacji konfiguracji, gdzie każda ewaluacja obejmowała 5 epok treningu.
+      Manual search potraktowano jako ekspercki punkt odniesienia złożony z 5 ręcznie
+      dobranych konfiguracji. Następnie najlepszą konfigurację każdej metody
+      dotrenowano przez 20 epok.
       
       Wyniki wskazują, że w badanym ustawieniu GA osiągnął najwyższą końcową dokładność
       testową na wszystkich trzech zbiorach: 0.9331 na FashionMNIST, 0.8092 na CIFAR-10
@@ -168,8 +170,9 @@ Zaimplementowano i porównano sześć metod:
 
 - *Manual search* — 5 ręcznie dobranych konfiguracji referencyjnych. Nie jest to metoda
   o takim samym budżecie jak pozostałe algorytmy, lecz baseline do oceny pozostałych metod.
-- *Random search* — 20 niezależnych losowań z przestrzeni hiperparametrów. Metoda ta
-  stanowi prosty. Metoda ta stanowi kolejny punkt odniesienia, pokazujący, ile można osiągnąć bez żadnej inteligencji w doborze hiperparametrów.
+- *Random search* — 20 niezależnych losowań z przestrzeni hiperparametrów.
+  Metoda ta stanowi prosty punkt odniesienia, pokazujący, ile można osiągnąć
+  bez wykorzystywania informacji z poprzednich ewaluacji.
 - *GA* — algorytm genetyczny z populacją 5 osobników przez 4 generacje. Zastosowano
   selekcję turniejową o rozmiarze 3, krzyżowanie wartości parametrów między rodzicami,
   mutację z prawdopodobieństwem 0.20 oraz elityzm o rozmiarze 1.
@@ -233,12 +236,12 @@ ograniczonego budżetu treningowego.
     align: (left, center, center, center),
     stroke: 0.5pt,
     table.header([*Metoda*], [*CIFAR-10*], [*CIFAR-100*], [*FashionMNIST*]),
-    [ACO], [0.7224], [*0.3476*], [0.9238],
-    [GA], [*0.7420*], [0.3474], [0.9220],
-    [Harmony Search], [0.6592], [0.3080], [*0.9273*],
-    [Manual search], [0.6828], [0.2840], [0.9202],
-    [PSO], [0.6372], [0.2636], [0.9258],
-    [Random search], [0.6836], [0.3122], [0.9253],
+    [ACO], [0.7582], [*0.3430*], [0.9222],
+    [GA], [*0.7548*], [0.3698], [0.9160],
+    [Harmony Search], [0.7338], [0.3220], [*0.9320*],
+    [Manual search], [0.7426], [0.3492], [0.9218],
+    [PSO], [0.7384], [0.1850], [0.8975],
+    [Random search], [0.7330], [0.3296], [0.9248],
   )
 ) <tab:cross-val>
 
@@ -340,12 +343,12 @@ Tabela @tab:final oraz rysunek @fig:final przedstawiają końcową wartość
     align: (left, center, center, center),
     stroke: 0.5pt,
     table.header([*Metoda*], [*CIFAR-10*], [*CIFAR-100*], [*FashionMNIST*]),
-    [ACO], [0.7744], [0.3605], [0.9264],
-    [GA], [*0.8092*], [*0.4314*], [*0.9331*],
-    [Harmony Search], [0.6546], [0.3250], [0.9249],
-    [Manual search], [0.7772], [0.4064], [0.9213],
-    [PSO], [0.6710], [0.2998], [0.9274],
-    [Random search], [0.6976], [0.3392], [0.9225],
+    [ACO], [0.7749], [0.0678], [0.9320],
+    [GA], [*0.8503*], [*0.5189*], [*0.9253*],
+    [Harmony Search], [0.8140], [0.3323], [0.9305],
+    [Manual search], [0.7996], [0.4666], [0.9268],
+    [PSO], [0.8011], [0.3850], [0.9226],
+    [Random search], [0.8244], [0.3437], [*0.9331*],
   )
 ) <tab:final>
 
