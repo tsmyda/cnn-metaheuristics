@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import pandas as pd
-
 
 def plot_best_so_far(csv_path: str, output_path: str) -> None:
     df = pd.read_csv(csv_path)
@@ -10,16 +10,26 @@ def plot_best_so_far(csv_path: str, output_path: str) -> None:
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
     plt.figure(figsize=(8, 5))
+    ax = plt.gca()
 
     for method, group in df.groupby("method"):
         group = group.sort_values("iteration").copy()
         group["best_so_far"] = group["val_accuracy"].cummax()
-        plt.plot(group["iteration"], group["best_so_far"], label=method)
 
-    plt.xlabel("Liczba ewaluacji")
-    plt.ylabel("Best validation accuracy")
-    plt.title("Porównanie metod strojenia")
-    plt.legend()
+        ax.step(
+            group["iteration"],
+            group["best_so_far"],
+            where="post",
+            marker="o",
+            label=method,
+        )
+
+    ax.set_xlabel("Liczba ewaluacji")
+    ax.set_ylabel("Best validation accuracy")
+    ax.set_title("Porównanie metod strojenia")
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.legend()
+
     plt.tight_layout()
     plt.savefig(output_path, dpi=200)
     plt.close()

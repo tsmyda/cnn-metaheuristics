@@ -17,11 +17,12 @@ DISCRETE_SPACE = {
     "filters_3": [64, 128, 256],
     "kernel_size": [3, 5],
     "dense_units": [64, 128, 256],
-}
-
-CONTINUOUS_SPACE = {
-    "learning_rate": (1e-4, 1e-2),
-    "dropout": (0.0, 0.5),
+    "optimizer": ["adam", "sgd", "adamw"],
+    "use_batch_norm": [0, 1],
+    # discretize continuous params so pheromones can guide them
+    "learning_rate": [1e-4, 1e-3, 1e-2],
+    "dropout": [0.0, 0.1, 0.25, 0.4, 0.5],
+    "weight_decay": [1e-6, 1e-5, 1e-4, 1e-3],
 }
 
 
@@ -42,15 +43,8 @@ def construct_solution(
     pheromones: Dict[str, Dict[Any, float]],
 ) -> Dict[str, Any]:
     config = {}
-
     for key in DISCRETE_SPACE:
         config[key] = sample_from_pheromones(pheromones[key])
-
-    lr_low, lr_high = CONTINUOUS_SPACE["learning_rate"]
-    dr_low, dr_high = CONTINUOUS_SPACE["dropout"]
-
-    config["learning_rate"] = 10 ** random.uniform(math.log10(lr_low), math.log10(lr_high))
-    config["dropout"] = random.uniform(dr_low, dr_high)
 
     return repair_config(config)
 

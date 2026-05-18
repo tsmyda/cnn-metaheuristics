@@ -47,6 +47,7 @@ class TunableCNN(nn.Module):
         filters_3: int,
         kernel_size: int,
         dropout: float,
+        use_batch_norm: int,
         dense_units: int,
     ):
         super().__init__()
@@ -60,8 +61,12 @@ class TunableCNN(nn.Module):
 
         for out_channels in filters:
             layers.append(nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding))
+            if use_batch_norm:
+                layers.append(nn.BatchNorm2d(out_channels))
             layers.append(nn.ReLU())
             layers.append(nn.Conv2d(out_channels, out_channels, kernel_size=kernel_size, padding=padding))
+            if use_batch_norm:
+                layers.append(nn.BatchNorm2d(out_channels))
             layers.append(nn.ReLU())
             layers.append(nn.MaxPool2d(kernel_size=2))
             layers.append(nn.Dropout(dropout))

@@ -1,4 +1,5 @@
 import time
+import copy
 from typing import Dict, Any
 
 import torch
@@ -40,6 +41,7 @@ def evaluate_config(
         filters_3=config["filters_3"],
         kernel_size=config["kernel_size"],
         dropout=config["dropout"],
+        use_batch_norm=int(config.get("use_batch_norm", 1)),
         dense_units=config["dense_units"],
     ).to(device)
 
@@ -56,6 +58,7 @@ def evaluate_config(
 
     best_val_acc = 0.0
     best_val_loss = float("inf")
+    best_model_state = None
 
     for _ in range(epochs):
         train_one_epoch(model, train_loader, optimizer, device)
@@ -63,8 +66,13 @@ def evaluate_config(
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
+            best_model_state = copy.deepcopy(model.state_dict())
         if val_loss < best_val_loss:
             best_val_loss = val_loss
+
+    # If we saved the best model during validation, load it for final test evaluation
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
 
     test_loss, test_acc = evaluate(model, test_loader, device)
     elapsed = time.time() - start_time

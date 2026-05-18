@@ -70,12 +70,15 @@
       konwolucyjnej sieci neuronowej. Eksperymenty przeprowadzono na trzech
       standardowych zbiorach obrazów (FashionMNIST, CIFAR-10, CIFAR-100)
       z jednakowym budżetem 20 pełnych ewaluacji (po 5 epok) oraz
-      20-epokowym dotrenowaniem najlepszej konfiguracji. Wyniki pokazują, że
-      GA konsekwentnie osiąga najwyższą jakość końcową (test accuracy 0.9331
-      na FashionMNIST, 0.8092 na CIFAR-10, 0.4314 na CIFAR-100), natomiast
-      ręczne strojenie pozostaje bardzo silnym punktem odniesienia, a PSO
-      w przyjętej parametryzacji niedostatecznie eksploruje przestrzeń przy
-      tak małym budżecie.
+      20-epokowym dotrenowaniem najlepszej konfiguracji. 
+      
+      Wyniki wskazują, że w badanym ustawieniu GA osiągnął najwyższą końcową dokładność
+      testową na wszystkich trzech zbiorach: 0.9331 na FashionMNIST, 0.8092 na CIFAR-10
+      oraz 0.4314 na CIFAR-100. Jednocześnie ręczne strojenie okazało się silnym punktem
+      odniesienia przy małym budżecie eksperymentalnym, szczególnie na zbiorze CIFAR-100.
+      PSO w przyjętej implementacji uzyskało słabsze wyniki, co sugeruje, że jego klasyczna,
+      ciągła postać może być niedopasowana do mieszanej przestrzeni hiperparametrów
+      zawierającej wiele zmiennych dyskretnych i kategorycznych.
     ]
   ]
 ]
@@ -90,16 +93,23 @@ Konwolucyjne sieci neuronowe (CNN) są obecnie dominującą rodziną modeli w za
 klasyfikacji obrazów. Ich skuteczność silnie zależy od doboru hiperparametrów:
 tempa uczenia, wielkości batcha, liczby filtrów konwolucyjnych w kolejnych blokach,
 rozmiaru jądra splotu, prawdopodobieństwa dropoutu, liczby warstw w bloku, a także
-wyboru optymalizatora oraz regularyzacji. Przestrzeń tych parametrów jest zarówno
-kategoryczna, jak i ciągła, a funkcja celu (jakość walidacyjna) jest
-zaszumiona i kosztowna do obliczenia, co czyni klasyczne wyszukiwanie siatkowe
-niepraktycznym.
+wyboru optymalizatora oraz regularyzacji. 
 
-W literaturze zaproponowano wiele metaheurystyk do strojenia architektur CNN @optimization_cnn. Celem niniejszego raportu jest empiryczne porównanie
-wybranych algorytmów — GA, PSO, ACO, Harmony Search — w tej samej przestrzeni
-przeszukiwań, przy tym samym budżecie obliczeniowym, z dwoma prostymi punktami
-odniesienia: wyszukiwaniem ręcznym (kilka sensownych konfiguracji wybranych
-a priori) oraz losowym. Kluczowe pytania badawcze to:
+Klasyczne przeszukiwanie siatkowe szybko staje się w takim problemie niepraktyczne,
+ponieważ liczba możliwych kombinacji rośnie bardzo szybko wraz z liczbą hiperparametrów.
+Z tego powodu w literaturze stosuje się metody heurystyczne i metaheurystyczne,
+które próbują znaleźć dobrą konfigurację bez konieczności sprawdzania całej przestrzeni
+przeszukiwań @optimization_cnn.
+
+Celem niniejszego raportu jest empiryczne porównanie wybranych metod strojenia
+hiperparametrów CNN: algorytmu genetycznego (GA), optymalizacji rojem cząstek (PSO),
+optymalizacji kolonią mrówek (ACO), wyszukiwania harmonicznego (Harmony Search),
+wyszukiwania losowego oraz ręcznie dobranych konfiguracji referencyjnych. Wszystkie
+metody automatyczne testowano w tej samej przestrzeni hiperparametrów i przy tym samym
+budżecie 20 ewaluacji. Manual search potraktowano jako ekspercki punkt odniesienia,
+a nie jako metodę o identycznym budżecie.
+
+Kluczowe pytania badawcze są następujące:
 
 #set list(indent: 0.6em)
 - Czy którakolwiek z metaheurystyk daje systematyczny zysk jakościowy względem random search / manual search?
@@ -112,54 +122,73 @@ a priori) oraz losowym. Kluczowe pytania badawcze to:
 
 == Przestrzeń przeszukiwań
 
-Wszystkie metody pracują w tej samej, 12-wymiarowej przestrzeni hiperparametrów,
-obejmującej zarówno wymiary architektoniczne (liczba bloków konwolucyjnych,
-liczba filtrów, rozmiar jądra, rozmiar warstwy gęstej, użycie batch normalization),
-jak i parametry uczenia (tempo uczenia, wielkość batcha, dropout, optymalizator,
-weight decay). Szczegóły zestawiono w tabeli @tab:space.
+Eksperyment przeprowadzono w 12-wymiarowej przestrzeni hiperparametrów,
+obejmującej zarówno parametry architektury CNN, jak i parametry procesu uczenia.
+Do parametrów architektonicznych należą: liczba bloków konwolucyjnych, liczba
+filtrów w kolejnych blokach, rozmiar jądra splotu, rozmiar warstwy gęstej oraz
+użycie batch normalization. Do parametrów treningowych należą: tempo uczenia,
+wielkość batcha, prawdopodobieństwo dropoutu, optymalizator oraz współczynnik
+weight decay. Szczegóły przestrzeni zestawiono w tabeli @tab:space.
 
 #figure(
-  caption: [Przestrzeń przeszukiwań użyta we wszystkich metodach.],
+  caption: [Przestrzeń hiperparametrów użyta w eksperymencie.],
   table(
     columns: (auto, auto, auto),
     align: (left, center, left),
     stroke: 0.5pt,
     table.header([*Hiperparametr*], [*Typ*], [*Dziedzina*]),
-    [learning_rate], [log-float], [$[10^(-4),\; 10^(-2)]$],
-    [batch_size], [kategoryczny], [${32, 64, 128, 256}$],
-    [num_blocks], [int], [$1,\;2,\;3$],
-    [filters_1], [kategoryczny], [${16, 32, 64}$],
-    [filters_2], [kategoryczny], [${32, 64, 128}$],
-    [filters_3], [kategoryczny], [${64, 128, 256}$],
-    [kernel_size], [kategoryczny], [${3, 5}$],
-    [dropout], [float], [$[0.0,\; 0.5]$],
-    [dense_units], [kategoryczny], [${64, 128, 256}$],
-    [optimizer], [kategoryczny], [${"adam, sgd, adamw"}$],
-    [weight_decay], [log-float], [$[10^(-6),\; 10^(-3)]$],
-    [use_batch_norm], [binarny], [${0, 1}$],
+    [`learning_rate`], [log-float], [$[10^(-4), 10^(-2)]$],
+    [`batch_size`], [kategoryczny], [{32, 64, 128, 256}],
+    [`num_blocks`], [całkowity], [{1, 2, 3}],
+    [`filters_1`], [kategoryczny], [{16, 32, 64}],
+    [`filters_2`], [kategoryczny], [{32, 64, 128}],
+    [`filters_3`], [kategoryczny], [{64, 128, 256}],
+    [`kernel_size`], [kategoryczny], [{3, 5}],
+    [`dropout`], [float], [$[0.0, 0.5]$],
+    [`dense_units`], [kategoryczny], [{64, 128, 256}],
+    [`optimizer`], [kategoryczny], [{adam, sgd, adamw}],
+    [`weight_decay`], [log-float], [$[10^(-6), 10^(-3)]$],
+    [`use_batch_norm`], [binarny], [{0, 1}],
   )
 ) <tab:space>
 
-Użyta architektura `TunableCNN` składa się z `num_blocks` bloków konwolucyjnych
-(każdy blok: dwie warstwy `Conv → ReLU` + `MaxPool` + `Dropout`), po których
-następuje spłaszczenie oraz jedna warstwa gęsta o `dense_units` neuronach.
-Ten sam szablon jest instancjonowany ze wszystkich kandydatów w fazie
-przeszukiwania i w fazie retreningu.
+Wspólnym modelem bazowym była konfigurowalna sieć `TunableCNN`. Model składa się
+z `num_blocks` bloków konwolucyjnych. Każdy blok zawiera dwie warstwy konwolucyjne,
+opcjonalną normalizację batchową po każdej konwolucji, aktywacje ReLU, operację
+max pooling oraz dropout. Po części konwolucyjnej następuje spłaszczenie reprezentacji
+i klasyfikator z jedną ukrytą warstwą gęstą o rozmiarze `dense_units`.
+
+Ten sam szablon architektury był używany zarówno w fazie krótkiego przeszukiwania,
+jak i podczas późniejszego dotrenowania najlepszych konfiguracji. Dzięki temu różnice
+między metodami wynikają z wyboru hiperparametrów, a nie ze zmiany samego modelu.
 
 == Algorytmy przeszukiwania
 
 Zaimplementowano i porównano sześć metod:
 
-- *Manual search* — 5 ręcznie dobranych konfiguracji stanowiących sensowne warianty referencyjne (różne `num_blocks`, `lr`, `dropout`).
-- *Random search* — 20 losowań z dystrybucji przestrzeni przeszukiwań.
-- *GA* — selekcja turniejowa (rozmiar 3), krzyżowanie jednopunktowe per gen, mutacja z prawdopodobieństwem 0.20, elita o rozmiarze 1.
-- *PSO* — rój 5 cząstek, 4 iteracje, inercja $w=0.7$, $c_1=c_2=1.5$; kategoryczne wymiary zaokrąglane do najbliższej dozwolonej wartości (funkcja naprawy).
-- *ACO* — 5 mrówek, 4 iteracje, rozkład feromonów per wymiar, parowanie $rho=0.2$, wzmocnienie top-2.
-- *Harmony Search* — pamięć harmonii o rozmiarze 5 + 15 iteracji, HMCR $=0.9$, PAR $=0.3$.
+- *Manual search* — 5 ręcznie dobranych konfiguracji referencyjnych. Nie jest to metoda
+  o takim samym budżecie jak pozostałe algorytmy, lecz baseline do oceny pozostałych metod.
+- *Random search* — 20 niezależnych losowań z przestrzeni hiperparametrów. Metoda ta
+  stanowi prosty. Metoda ta stanowi kolejny punkt odniesienia, pokazujący, ile można osiągnąć bez żadnej inteligencji w doborze hiperparametrów.
+- *GA* — algorytm genetyczny z populacją 5 osobników przez 4 generacje. Zastosowano
+  selekcję turniejową o rozmiarze 3, krzyżowanie wartości parametrów między rodzicami,
+  mutację z prawdopodobieństwem 0.20 oraz elityzm o rozmiarze 1.
+- *PSO* — optymalizacja rojem 5 cząstek przez 4 iteracje. Użyto parametrów
+  $w = 0.7$ oraz $c_1 = c_2 = 1.5$. Ponieważ część hiperparametrów ma charakter
+  kategoryczny lub dyskretny, pozycje cząstek były naprawiane przez ograniczanie
+  wartości do dozwolonych zakresów i zaokrąglanie do najbliższych poprawnych wartości.
+- *ACO* — optymalizacja kolonią 5 mrówek przez 4 iteracje. Rozkład feromonów prowadzono
+  osobno dla poszczególnych wymiarów przestrzeni. Po każdej iteracji stosowano parowanie
+  feromonów z parametrem $rho = 0.2$ oraz wzmacnianie najlepszych konfiguracji.
+- *Harmony Search* — metoda z pamięcią harmonii o rozmiarze 5 oraz 15 kolejnymi
+  improwizacjami. Zastosowano parametry HMCR $= 0.9$ oraz PAR $= 0.3$.
 
-Budżety zostały wyrównane: każda metoda wykonuje dokładnie 20 pełnych ewaluacji
-(w przypadku GA i PSO: $"pop" times "iter" = 5 times 4$; ACO: $"mrówki" times "iter" = 5 times 4$;
-HS: 5 do pamięci + 15 iteracji improwizacji).
+Dla metod automatycznych zastosowano jednakowy budżet 20 ewaluacji konfiguracji.
+W przypadku GA i PSO odpowiada to schematowi $5 times 4$, dla ACO liczbie
+$5$ mrówek przez $4$ iteracje, a dla Harmony Search: $5$ konfiguracjom inicjalnym
+w pamięci harmonii oraz $15$ improwizacjom. Manual search ma mniejszy budżet
+i dlatego jest interpretowany osobno jako punkt odniesienia, a nie jako metoda
+bezpośrednio równoważna pod względem liczby ewaluacji.
 
 == Procedura ewaluacji
 
