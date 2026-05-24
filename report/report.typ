@@ -69,18 +69,18 @@
       hiperparametrów (wyszukiwanie ręczne i losowe) w zadaniu strojenia
       konwolucyjnej sieci neuronowej. Eksperymenty przeprowadzono na trzech standardowych zbiorach obrazów
       (FashionMNIST, CIFAR-10, CIFAR-100). Metody automatyczne porównano przy budżecie
-      20 ewaluacji konfiguracji, gdzie każda ewaluacja obejmowała 5 epok treningu.
+        20 ewaluacji konfiguracji, gdzie każda ewaluacja obejmowała 10 epok treningu.
       Manual search potraktowano jako ekspercki punkt odniesienia złożony z 5 ręcznie
       dobranych konfiguracji. Następnie najlepszą konfigurację każdej metody
       dotrenowano przez 20 epok.
       
-      Wyniki wskazują, że w badanym ustawieniu GA osiągnął najwyższą końcową dokładność
-      testową na wszystkich trzech zbiorach: 0.9331 na FashionMNIST, 0.8092 na CIFAR-10
-      oraz 0.4314 na CIFAR-100. Jednocześnie ręczne strojenie okazało się silnym punktem
-      odniesienia przy małym budżecie eksperymentalnym, szczególnie na zbiorze CIFAR-100.
-      PSO w przyjętej implementacji uzyskało słabsze wyniki, co sugeruje, że jego klasyczna,
-      ciągła postać może być niedopasowana do mieszanej przestrzeni hiperparametrów
-      zawierającej wiele zmiennych dyskretnych i kategorycznych.
+      Wyniki wskazują, że po 20-epokowym dotrenowaniu najlepszą dokładność testową
+      uzyskało manual search na CIFAR-10 (0.8482) i FashionMNIST (0.9383), natomiast
+      GA najlepiej poradził sobie na CIFAR-100 (0.5189). Jednocześnie ręczne strojenie
+      pozostało bardzo silnym punktem odniesienia przy małym budżecie eksperymentalnym,
+      a PSO w przyjętej implementacji uzyskało słabsze wyniki, co sugeruje, że jego
+      klasyczna, ciągła postać może być niedopasowana do mieszanej przestrzeni
+      hiperparametrów zawierającej wiele zmiennych dyskretnych i kategorycznych.
     ]
   ]
 ]
@@ -116,7 +116,7 @@ Kluczowe pytania badawcze są następujące:
 #set list(indent: 0.6em)
 - Czy którakolwiek z metaheurystyk daje systematyczny zysk jakościowy względem random search / manual search?
 - Jak kształtuje się relacja jakości do czasu przeszukiwania (time-to-best)?
-- Czy konfiguracja wybrana w fazie szybkiego przeszukiwania (5 epok) przekłada się na jakość po pełniejszym dotrenowaniu (20 epok)?
+- Czy konfiguracja wybrana w fazie szybkiego przeszukiwania (10 epok) przekłada się na jakość po pełniejszym dotrenowaniu (20 epok)?
 
 // ============ METODYKA ============
 
@@ -225,23 +225,23 @@ Raport został przygotowany na podstawie wyników wygenerowanych w notatniku `ex
 
 Tabela @tab:cross-val oraz rysunek @fig:cross podsumowują najlepszą wartość
 `val_accuracy` osiągniętą przez każdą metodę w fazie przeszukiwania. Każda
-ewaluacja konfiguracji obejmowała krótki, 5-epokowy trening, dlatego wyniki
+ewaluacja konfiguracji obejmowała krótki, 10-epokowy trening, dlatego wyniki
 z tej części należy interpretować jako miarę jakości konfiguracji w warunkach
 ograniczonego budżetu treningowego.
 
 #figure(
-  caption: [Najlepsza `val_accuracy` uzyskana w fazie przeszukiwania (5 epok / ewaluację).],
+  caption: [Najlepsza `val_accuracy` uzyskana w fazie przeszukiwania (10 epok / ewaluację).],
   table(
     columns: (auto, auto, auto, auto),
     align: (left, center, center, center),
     stroke: 0.5pt,
     table.header([*Metoda*], [*CIFAR-10*], [*CIFAR-100*], [*FashionMNIST*]),
-    [ACO], [0.7582], [*0.3430*], [0.9222],
-    [GA], [*0.7548*], [0.3698], [0.9160],
-    [Harmony Search], [0.7338], [0.3220], [*0.9320*],
-    [Manual search], [0.7426], [0.3492], [0.9218],
-    [PSO], [0.7384], [0.1850], [0.8975],
-    [Random search], [0.7330], [0.3296], [0.9248],
+    [ACO], [0.7922], [0.3652], [0.9262],
+    [GA], [*0.8178*], [*0.4432*], [0.9322],
+    [Harmony Search], [0.7740], [0.4034], [0.9342],
+    [Manual search], [0.7980], [0.4288], [*0.9365*],
+    [PSO], [0.7984], [0.3138], [0.9197],
+    [Random search], [0.8166], [0.4094], [0.9328],
   )
 ) <tab:cross-val>
 
@@ -250,14 +250,15 @@ ograniczonego budżetu treningowego.
   caption: [Najlepsza `val_accuracy` per metoda na każdym zbiorze w fazie przeszukiwania.],
 ) <fig:cross>
 
-Na zbiorze CIFAR-10 najwyższą dokładność walidacyjną uzyskał GA (0.7420),
-wyprzedzając ACO o około 2 p.p. oraz random search o około 5.8 p.p. Na zbiorze
-CIFAR-100 wyniki ACO i GA były praktycznie nierozróżnialne (0.3476 wobec 0.3474),
-a obie metody wyraźnie przewyższyły pozostałe podejścia. Na FashionMNIST różnice
-między metodami były niewielkie: wszystkie wyniki mieściły się w zakresie około
-0.920--0.928. Sugeruje to, że dla tego zbioru badana architektura stosunkowo łatwo
-osiąga wysoki poziom jakości, a wybór metody strojenia ma mniejsze znaczenie niż
-w przypadku trudniejszych zbiorów CIFAR.
+Na zbiorze CIFAR-10 najwyższą dokładność walidacyjną uzyskał GA (0.8178), bardzo
+nieznacznie wyprzedzając random search (0.8166) i manual search (0.7980).
+Na zbiorze CIFAR-100 ponownie najlepszy był GA (0.4432), a kolejne miejsca zajęły
+manual search (0.4288) i random search (0.4094). Na FashionMNIST najwyższą
+`val_accuracy` osiągnęło manual search (0.9365), przy czym Harmony Search,
+random search i GA również uplasowały się bardzo blisko siebie w zakresie
+0.932--0.934. Sugeruje to, że dla tego zbioru badana architektura stosunkowo
+łatwo osiąga wysoki poziom jakości, a wybór metody strojenia ma mniejsze znaczenie
+niż w przypadku trudniejszych zbiorów CIFAR.
 
 == Krzywe best-so-far
 
@@ -284,15 +285,15 @@ tempo znajdowania dobrych konfiguracji.
   metody zbiegają do zbliżonego poziomu.],
 ) <fig:bsf-fashion>
 
-Na CIFAR-10 random search i manual search szybko osiągają poziom około 0.68, ale
-w dalszej części budżetu nie poprawiają istotnie najlepszego wyniku. GA oraz ACO
-kontynuują poprawę w kolejnych ewaluacjach, co sugeruje, że w tym przypadku
-mechanizmy wykorzystujące informację o jakości wcześniejszych konfiguracji były
-korzystniejsze niż niezależne losowanie. PSO uzyskało słabszy przebieg best-so-far.
-Może to wynikać z faktu, że klasyczna reprezentacja PSO operuje na pozycjach
-ciągłych, podczas gdy badana przestrzeń zawiera wiele zmiennych dyskretnych
-i kategorycznych, które następnie muszą być naprawiane do najbliższych dozwolonych
-wartości.
+Na CIFAR-10 random search i manual search szybko osiągają poziom zbliżony do
+końcowego optimum, ale GA ostatecznie uzyskuje minimalnie lepszy wynik. Na
+CIFAR-100 GA poprawia się najbardziej w końcowych ewaluacjach i wyraźnie
+wyprzedza pozostałe metody. Na FashionMNIST wszystkie metody dochodzą do bardzo
+podobnego poziomu, przy czym manual search pozostaje najlepszym punktem odniesienia.
+PSO uzyskało słabszy przebieg best-so-far. Może to wynikać z faktu, że klasyczna
+reprezentacja PSO operuje na pozycjach ciągłych, podczas gdy badana przestrzeń
+zawiera wiele zmiennych dyskretnych i kategorycznych, które następnie muszą być
+naprawiane do najbliższych dozwolonych wartości.
 
 == Czas do osiągnięcia najlepszego wyniku
 
@@ -305,7 +306,7 @@ Maksymalna wartość `val_accuracy` nie opisuje w pełni zachowania metody. Isto
   caption: [Czas do osiągnięcia najlepszej `val_accuracy` dla każdej metody i zbioru danych.],
 ) <fig:ttb-all>
 
-Warto interpretować tę metrykę razem z maksymalną osiągniętą dokładnością walidacyjną. Krótki czas do najlepszego wyniku nie musi oznaczać, że dana metoda znalazła najlepszą konfigurację globalnie — może jedynie oznaczać, że szybko osiągnęła swój własny najlepszy wynik w ramach danego uruchomienia. Dla tej metryki wynik random jest zupełnie nieprzewidywalny, ponieważ nie ma mechanizmu uczenia się z wcześniejszych ewaluacji. GA ma tendencję do osiągania swoich najlepszych wyników w późniejszej części budżetu.
+Warto interpretować tę metrykę razem z maksymalną osiągniętą dokładnością walidacyjną. Krótki czas do najlepszego wyniku nie musi oznaczać, że dana metoda znalazła najlepszą konfigurację globalnie — może jedynie oznaczać, że szybko osiągnęła swój własny najlepszy wynik w ramach danego uruchomienia. Na CIFAR-10 manual search osiąga najlepszy wynik po 4 ewaluacjach, random search po 7, a GA dopiero po 18. Na CIFAR-100 manual search także znajduje najlepszą konfigurację bardzo wcześnie, podczas gdy GA potrzebuje znacznie większej części budżetu. Na FashionMNIST najszybsze są manual search i PSO, ale najlepszy wynik nadal należy do manual search. Dla tej metryki wynik random jest zupełnie nieprzewidywalny, ponieważ nie ma mechanizmu uczenia się z wcześniejszych ewaluacji.
 
 == Analiza zależności hiperparametrów i metryk
 
@@ -320,13 +321,14 @@ Ze względu na objętość raportu w głównej części przedstawiono jedną rep
 
 W przedstawionym przykładzie zależności między hiperparametrami a jakością modelu
 są umiarkowane. Najsilniejszy dodatni związek z `val_accuracy` ma liczba filtrów
-w pierwszym bloku (`filters_1`, około $0.37$). Pozostałe korelacje z dokładnością
-walidacyjną są słabsze, co sugeruje, że w tej próbie jakość modelu nie była
-kontrolowana przez pojedynczy hiperparametr, lecz przez kombinację kilku ustawień.
+w pierwszym bloku (`filters_1`, około $0.22$), natomiast liczba bloków i rozmiar
+batcha wykazują umiarkowanie ujemną korelację z jakością. Pozostałe korelacje z
+dokładnością walidacyjną są słabsze, co sugeruje, że w tej próbie jakość modelu nie
+była kontrolowana przez pojedynczy hiperparametr, lecz przez kombinację kilku ustawień.
 
 == Jakość końcowa po dotrenowaniu
 
-W fazie przeszukiwania każda konfiguracja była oceniana po krótkim, 5-epokowym
+W fazie przeszukiwania każda konfiguracja była oceniana po krótkim, 10-epokowym
 treningu. Taka procedura pozwala ograniczyć koszt eksperymentu, ale nie daje jeszcze
 pełnej informacji o jakości konfiguracji po dłuższym uczeniu. Dlatego dla każdej pary
 (zbiór danych, metoda) wybrano konfigurację o najwyższej wartości `val_accuracy`
@@ -343,12 +345,12 @@ Tabela @tab:final oraz rysunek @fig:final przedstawiają końcową wartość
     align: (left, center, center, center),
     stroke: 0.5pt,
     table.header([*Metoda*], [*CIFAR-10*], [*CIFAR-100*], [*FashionMNIST*]),
-    [ACO], [0.7749], [0.0678], [0.9320],
-    [GA], [*0.8503*], [*0.5189*], [*0.9253*],
-    [Harmony Search], [0.8140], [0.3323], [0.9305],
-    [Manual search], [0.7996], [0.4666], [0.9268],
-    [PSO], [0.8011], [0.3850], [0.9226],
-    [Random search], [0.8244], [0.3437], [*0.9331*],
+    [ACO], [0.8109], [0.4308], [0.9202],
+    [GA], [0.8406], [*0.5189*], [0.9331],
+    [Harmony Search], [0.8161], [0.4680], [0.9305],
+    [Manual search], [*0.8482*], [0.4666], [*0.9383*],
+    [PSO], [0.7373], [0.3720], [0.9180],
+    [Random search], [0.8449], [0.4680], [0.9313],
   )
 ) <tab:final>
 
@@ -357,25 +359,25 @@ Tabela @tab:final oraz rysunek @fig:final przedstawiają końcową wartość
   caption: [Końcowa `test_accuracy` po retreningu — metoda $times$ zbiór.],
 ) <fig:final>
 
-W przeprowadzonym eksperymencie GA uzyskał najwyższą końcową dokładność testową
-na wszystkich trzech zbiorach danych: 0.9331 na FashionMNIST, 0.8092 na CIFAR-10
-oraz 0.4314 na CIFAR-100. Największe różnice widoczne są na zbiorach CIFAR,
-szczególnie na CIFAR-100, gdzie GA uzyskał wynik o około 2.5 p.p. wyższy od
-manual search, około 7.1 p.p. wyższy od ACO oraz około 9.2 p.p. wyższy od
-random search.
+W przeprowadzonym eksperymencie manual search uzyskał najwyższą końcową
+`test_accuracy` na CIFAR-10 (0.8482) i FashionMNIST (0.9383), natomiast GA
+zwyciężył na CIFAR-100 (0.5189). Na CIFAR-10 random search był bardzo blisko GA
+(0.8449 wobec 0.8406), a manual search wyprzedził pozostałe metody o około
+0.3--0.8 p.p. Na CIFAR-100 GA uzyskał wynik o około 5.2 p.p. wyższy od manual
+search, około 8.8 p.p. wyższy od ACO oraz około 5.1 p.p. wyższy od random search.
 
 Manual search pozostaje jednak silną linią bazową. Na CIFAR-10 osiąga drugi wynik
-po GA, bardzo zbliżony do ACO, natomiast na CIFAR-100 jest drugą najlepszą metodą.
+po random search i przed ACO, natomiast na CIFAR-100 jest drugą najlepszą metodą.
 Wskazuje to, że przy małym budżecie ewaluacji ręcznie dobrane konfiguracje mogą być
 konkurencyjne wobec metod automatycznych, zwłaszcza jeśli zostały dobrane na podstawie
 intuicji dotyczącej architektury CNN.
 
 Krzywe dotrenowania na rysunku @fig:retrain pozwalają ocenić, czy konfiguracje wybrane
 po krótkim treningu zachowują przewagę również w dłuższym uczeniu. W badanym ustawieniu
-ranking metod po dotrenowaniu jest w dużej mierze zgodny z wynikami fazy przeszukiwania,
-szczególnie dla GA, które utrzymuje przewagę po 20 epokach. Oznacza to, że 5-epokowa
-ewaluacja była użytecznym, choć przybliżonym, kryterium wyboru konfiguracji do dalszego
-treningu.
+ranking metod po dotrenowaniu jest tylko częściowo zgodny z wynikami fazy przeszukiwania.
+GA utrzymuje przewagę na CIFAR-100, natomiast na CIFAR-10 i FashionMNIST najlepsze
+końcowe wyniki osiąga manual search. Oznacza to, że 10-epokowa ewaluacja była
+użytecznym, choć przybliżonym, kryterium wyboru konfiguracji do dalszego treningu.
 
 #figure(
   image("figures/final_retraining_val_curves.png", width: 100%),
@@ -413,43 +415,44 @@ konfiguracji ocenionych w ramach jednego przebiegu eksperymentu.
       ),
 
       [ACO],
-      [$0.580 plus.minus 0.125$], [$0.578 plus.minus 0.123$],
-      [$0.182 plus.minus 0.110$], [$0.181 plus.minus 0.111$],
-      [$0.896 plus.minus 0.019$], [$0.891 plus.minus 0.020$],
+      [$0.612 plus.minus 0.171$], [$0.611 plus.minus 0.169$],
+      [$0.234 plus.minus 0.115$], [$0.233 plus.minus 0.117$],
+      [$0.859 plus.minus 0.180$], [$0.853 plus.minus 0.180$],
 
       [GA],
-      [$0.651 plus.minus 0.107$], [$0.652 plus.minus 0.105$],
-      [$0.254 plus.minus 0.111$], [$0.254 plus.minus 0.109$],
-      [$0.909 plus.minus 0.013$], [$0.905 plus.minus 0.012$],
+      [$0.711 plus.minus 0.107$], [$0.711 plus.minus 0.105$],
+      [$0.320 plus.minus 0.129$], [$0.321 plus.minus 0.131$],
+      [$0.923 plus.minus 0.012$], [$0.918 plus.minus 0.012$],
 
       [Harmony S.],
-      [$0.524 plus.minus 0.197$], [$0.526 plus.minus 0.197$],
-      [$0.180 plus.minus 0.109$], [$0.181 plus.minus 0.110$],
-      [$0.883 plus.minus 0.054$], [$0.879 plus.minus 0.054$],
+      [$0.537 plus.minus 0.207$], [$0.536 plus.minus 0.208$],
+      [$0.200 plus.minus 0.106$], [$0.197 plus.minus 0.107$],
+      [$0.867 plus.minus 0.182$], [$0.862 plus.minus 0.181$],
 
       [Manual],
-      [$0.721 plus.minus 0.030$], [$0.718 plus.minus 0.029$],
-      [$0.252 plus.minus 0.080$], [$0.252 plus.minus 0.082$],
-      [$0.920 plus.minus 0.002$], [$0.916 plus.minus 0.003$],
+      [$0.761 plus.minus 0.045$], [$0.758 plus.minus 0.043$],
+      [$0.325 plus.minus 0.096$], [$0.323 plus.minus 0.102$],
+      [$0.932 plus.minus 0.003$], [$0.925 plus.minus 0.002$],
 
       [PSO],
-      [$0.364 plus.minus 0.248$], [$0.364 plus.minus 0.250$],
-      [$0.055 plus.minus 0.061$], [$0.055 plus.minus 0.061$],
-      [$0.802 plus.minus 0.240$], [$0.796 plus.minus 0.238$],
+      [$0.375 plus.minus 0.276$], [$0.373 plus.minus 0.278$],
+      [$0.065 plus.minus 0.084$], [$0.064 plus.minus 0.083$],
+      [$0.851 plus.minus 0.190$], [$0.846 plus.minus 0.189$],
 
       [Random],
-      [$0.546 plus.minus 0.195$], [$0.547 plus.minus 0.194$],
-      [$0.158 plus.minus 0.114$], [$0.157 plus.minus 0.114$],
-      [$0.892 plus.minus 0.034$], [$0.887 plus.minus 0.033$],
+      [$0.604 plus.minus 0.199$], [$0.603 plus.minus 0.199$],
+      [$0.220 plus.minus 0.123$], [$0.221 plus.minus 0.125$],
+      [$0.907 plus.minus 0.029$], [$0.902 plus.minus 0.029$],
     )
   }
 ) <tab:summary-all>
 
-Na CIFAR-10 najwyższą średnią jakość ocenianych konfiguracji uzyskał GA, przy
-umiarkowanym rozrzucie wyników. Podobny obraz widać na CIFAR-100, gdzie GA ma
-najwyższe średnie `val_accuracy` i `test_accuracy`, natomiast PSO osiąga wyraźnie
-niższą średnią i duży względny rozrzut. Sugeruje to, że w tym eksperymencie PSO
-często odwiedzało słabe konfiguracje.
+Na CIFAR-10 najwyższą średnią jakość ocenianych konfiguracji uzyskał manual search,
+przy jednocześnie bardzo małym rozrzucie wyników. Podobny obraz widać na CIFAR-100,
+gdzie manual search ma najwyższe średnie `val_accuracy` i `test_accuracy`, natomiast
+PSO osiąga wyraźnie niższą średnią i duży względny rozrzut. Sugeruje to, że w tym
+eksperymencie ręcznie dobrane konfiguracje były szczególnie stabilną linią bazową,
+natomiast PSO często odwiedzało słabe konfiguracje.
 
 Na FashionMNIST różnice między metodami są mniejsze, ponieważ większość konfiguracji
 osiąga stosunkowo wysoką jakość. Najniższy rozrzut ma manual search, co wynika
@@ -484,54 +487,56 @@ z przestrzeni przeszukiwań, udostępniono w repozytorium projektu jako pliki
         [*lr*], [*bs*], [*blocks*], [*dropout*], [*dense*],
       ),
 
-      [CIFAR-10], [ACO], [$0.7582$], [$0.7605$], [$1.0 times 10^(-3)$], [128], [2], [$0.00$], [64],
-      [CIFAR-10], [GA], [$0.7548$], [$0.7513$], [$1.56 times 10^(-4)$], [64], [3], [$0.27$], [64],
-      [CIFAR-10], [Manual], [$0.7426$], [$0.7365$], [$1.0 times 10^(-3)$], [64], [2], [$0.25$], [128],
-      [CIFAR-10], [PSO], [$0.7384$], [$0.7390$], [$1.40 times 10^(-3)$], [32], [2], [$0.09$], [128],
-      [CIFAR-10], [HS], [$0.7338$], [$0.7384$], [$1.43 times 10^(-3)$], [32], [3], [$0.37$], [256],
-      [CIFAR-10], [Random], [$0.7330$], [$0.7267$], [$2.29 times 10^(-3)$], [32], [3], [$0.06$], [128],
+      [CIFAR-10], [ACO], [$0.7922$], [$0.7899$], [$1.0 times 10^(-3)$], [64], [3], [$0.10$], [64],
+      [CIFAR-10], [GA], [$0.8178$], [$0.8095$], [$1.56 times 10^(-4)$], [64], [3], [$0.27$], [128],
+      [CIFAR-10], [Manual], [$0.7980$], [$0.7947$], [$2.0 times 10^(-4)$], [128], [3], [$0.40$], [256],
+      [CIFAR-10], [PSO], [$0.7984$], [$0.7834$], [$1.0 times 10^(-2)$], [128], [2], [$0.34$], [256],
+      [CIFAR-10], [HS], [$0.7740$], [$0.7775$], [$1.56 times 10^(-4)$], [128], [3], [$0.27$], [128],
+      [CIFAR-10], [Random], [$0.8166$], [$0.8079$], [$8.40 times 10^(-4)$], [128], [3], [$0.42$], [64],
 
-      [CIFAR-100], [GA], [$0.3698$], [$0.3725$], [$1.56 times 10^(-4)$], [64], [3], [$0.27$], [128],
-      [CIFAR-100], [Manual], [$0.3492$], [$0.3563$], [$5.0 times 10^(-4)$], [128], [2], [$0.30$], [256],
-      [CIFAR-100], [ACO], [$0.3430$], [$0.3421$], [$1.0 times 10^(-3)$], [64], [1], [$0.00$], [64],
-      [CIFAR-100], [Random], [$0.3296$], [$0.3374$], [$1.58 times 10^(-3)$], [256], [1], [$0.03$], [256],
-      [CIFAR-100], [HS], [$0.3220$], [$0.3136$], [$1.52 times 10^(-3)$], [128], [1], [$0.03$], [256],
-      [CIFAR-100], [PSO], [$0.1850$], [$0.1912$], [$2.73 times 10^(-3)$], [128], [3], [$0.24$], [64],
+      [CIFAR-100], [GA], [$0.4432$], [$0.4501$], [$1.56 times 10^(-4)$], [64], [3], [$0.27$], [128],
+      [CIFAR-100], [Manual], [$0.4288$], [$0.4328$], [$5.0 times 10^(-4)$], [128], [2], [$0.30$], [256],
+      [CIFAR-100], [Random], [$0.4094$], [$0.4147$], [$1.56 times 10^(-4)$], [128], [3], [$0.27$], [128],
+      [CIFAR-100], [HS], [$0.4034$], [$0.4123$], [$1.56 times 10^(-4)$], [128], [3], [$0.27$], [128],
+      [CIFAR-100], [ACO], [$0.3652$], [$0.3732$], [$1.0 times 10^(-4)$], [64], [3], [$0.10$], [64],
+      [CIFAR-100], [PSO], [$0.3138$], [$0.3075$], [$1.40 times 10^(-3)$], [32], [2], [$0.09$], [128],
 
-      [FashionMNIST], [HS], [$0.9320$], [$0.9226$], [$1.43 times 10^(-3)$], [32], [3], [$0.03$], [256],
-      [FashionMNIST], [Random], [$0.9248$], [$0.9184$], [$2.08 times 10^(-3)$], [128], [2], [$0.34$], [256],
-      [FashionMNIST], [ACO], [$0.9222$], [$0.9155$], [$1.0 times 10^(-3)$], [256], [2], [$0.10$], [128],
-      [FashionMNIST], [Manual], [$0.9218$], [$0.9176$], [$8.0 times 10^(-4)$], [32], [1], [$0.20$], [128],
-      [FashionMNIST], [GA], [$0.9160$], [$0.9122$], [$1.52 times 10^(-3)$], [32], [1], [$0.28$], [256],
-      [FashionMNIST], [PSO], [$0.8975$], [$0.8929$], [$3.75 times 10^(-3)$], [128], [1], [$0.19$], [256],
+      [FashionMNIST], [Manual], [$0.9365$], [$0.9251$], [$2.0 times 10^(-4)$], [128], [3], [$0.40$], [256],
+      [FashionMNIST], [HS], [$0.9342$], [$0.9280$], [$1.43 times 10^(-3)$], [32], [3], [$0.03$], [256],
+      [FashionMNIST], [Random], [$0.9328$], [$0.9303$], [$6.34 times 10^(-4)$], [32], [1], [$0.33$], [128],
+      [FashionMNIST], [GA], [$0.9322$], [$0.9276$], [$1.52 times 10^(-3)$], [256], [3], [$0.28$], [256],
+      [FashionMNIST], [ACO], [$0.9262$], [$0.9183$], [$1.0 times 10^(-2)$], [128], [3], [$0.25$], [256],
+      [FashionMNIST], [PSO], [$0.9197$], [$0.9152$], [$1.0 times 10^(-2)$], [256], [1], [$0.47$], [256],
     )
   }
 ) <tab:best-all>
 
 Warto zauważyć, że najlepsze konfiguracje nie tworzą jednego uniwersalnego wzorca
-dla wszystkich zbiorów. Dla trudniejszych zbiorów CIFAR korzystne okazują się raczej
-konfiguracje o większej pojemności lub mniejszym tempie uczenia, natomiast na
-FashionMNIST wiele różnych ustawień osiąga podobną jakość. Oznacza to, że skuteczność
-konfiguracji jest zależna zarówno od zbioru danych, jak i od sposobu eksploracji
-przestrzeni przez daną metodę.
+dla wszystkich zbiorów. Dla CIFAR-10 i CIFAR-100 korzystne okazały się konfiguracje
+z umiarkowaną liczbą bloków i niskim albo średnim dropoutem, natomiast na
+FashionMNIST manual search i Harmony Search wykorzystały bardziej pojemne układy z
+większą liczbą filtrów i wyższym dropoutem. Oznacza to, że skuteczność konfiguracji
+jest zależna zarówno od zbioru danych, jak i od sposobu eksploracji przestrzeni
+przez daną metodę.
 
 // ============ DYSKUSJA ============
 
 = Dyskusja i wnioski
 
-W przeprowadzonym eksperymencie GA uzyskał najwyższą końcową `test_accuracy`
-na wszystkich trzech zbiorach danych: FashionMNIST, CIFAR-10 i CIFAR-100.
-Wynik ten sugeruje, że w badanej przestrzeni hiperparametrów mechanizmy selekcji,
-elityzmu i mutacji skutecznie kierowały populację w stronę lepszych konfiguracji.
-Nie należy jednak traktować tego jako bezwarunkowej przewagi GA nad pozostałymi
+W przeprowadzonym eksperymencie liderzy różnili się między zbiorami danych: GA
+uzyskał najwyższą końcową `test_accuracy` na CIFAR-100, natomiast manual search
+zwyciężył na CIFAR-10 i FashionMNIST. Wynik ten sugeruje, że w badanej przestrzeni
+hiperparametrów mechanizmy selekcji, elityzmu i mutacji mogą dobrze kierować
+populację, ale ich skuteczność zależy od charakterystyki zbioru i budżetu
+ewaluacji. Nie należy traktować tego jako bezwarunkowej przewagi GA nad pozostałymi
 metodami, ponieważ eksperyment wykonano przy ograniczonym budżecie ewaluacji
 i dla pojedynczego ziarna losowego.
 
 Istotnym wynikiem jest również bardzo dobra pozycja manual search. Ręcznie dobrane
-konfiguracje okazały się szczególnie konkurencyjne na CIFAR-100, gdzie manual search
-był drugą najlepszą metodą po dotrenowaniu. Pokazuje to, że przy małym budżecie
-kilka sensownie dobranych konfiguracji eksperckich może być trudną do pobicia linią
-bazową.
+konfiguracje okazały się szczególnie konkurencyjne na CIFAR-10 i FashionMNIST,
+gdzie po dotrenowaniu uzyskały najlepsze wyniki. Na CIFAR-100 manual search pozostał
+drugą najlepszą metodą po GA. Pokazuje to, że przy małym budżecie kilka sensownie
+dobranych konfiguracji eksperckich może być trudną do pobicia linią bazową.
 
 PSO uzyskało słabsze wyniki niż GA, ACO i często również random search. Możliwym
 wyjaśnieniem jest niedopasowanie klasycznej, ciągłej reprezentacji PSO do mieszanej
@@ -547,10 +552,11 @@ wartości z pamięci harmonii. Przy małej pamięci i ograniczonym budżecie mo�
 prowadzić do zbyt szybkiej eksploatacji wcześniej znalezionych konfiguracji kosztem
 dalszej eksploracji.
 
-Wyniki po 20-epokowym dotrenowaniu wskazują, że krótka, 5-epokowa ewaluacja była
-użytecznym kryterium wyboru konfiguracji do dalszego treningu. Metody osiągające
-dobre wyniki w fazie przeszukiwania zwykle zachowywały przewagę także po dotrenowaniu.
-Nie oznacza to jednak, że `val_accuracy` po 5 epokach jest pełnym substytutem dłuższego
+Wyniki po 20-epokowym dotrenowaniu wskazują, że krótka, 10-epokowa ewaluacja była
+użytecznym kryterium wyboru konfiguracji do dalszego treningu, ale nie przesądzała
+o ostatecznym rankingu metod. W części przypadków lepszy wynik po retreningu miały
+konfiguracje, które nie były absolutnie najlepsze w fazie przeszukiwania. Nie oznacza
+to jednak, że `val_accuracy` po 10 epokach jest pełnym substytutem dłuższego
 treningu. Jest to raczej kosztowo tańszy wskaźnik jakości konfiguracji.
 
 Analiza korelacji hiperparametrów z metrykami miała charakter pomocniczy. Najłatwiej
