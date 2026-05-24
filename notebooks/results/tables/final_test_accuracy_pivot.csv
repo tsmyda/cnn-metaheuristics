@@ -1,7 +1,0 @@
-method,CIFAR10,CIFAR100,FashionMNIST
-aco,0.8109,0.4308,0.9202
-ga,0.8406,0.5189,0.9331
-harmony_search,0.8161,0.468,0.9305
-manual_search,0.8482,0.4666,0.9383
-pso,0.7373,0.372,0.918
-random_search,0.8449,0.468,0.9313
