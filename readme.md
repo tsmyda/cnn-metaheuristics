@@ -10,4 +10,3 @@ search, GA, PSO, ACO, and Harmony Search.
 - `scripts/`: runnable experiment entry points.
 - `notebooks/`: interactive analysis and experimentation.
 - `report/`: the final report.
-- `notebooks/`: interactive notebook to run the tests.
