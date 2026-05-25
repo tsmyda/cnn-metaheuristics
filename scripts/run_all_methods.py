@@ -158,7 +158,7 @@ def main():
         device=device,
         seed=seed,
         selected_methods=selected_methods,
-        random_budget=10,
+        random_budget=1226,
         ga_population=5,
         ga_generations=4,
         pso_swarm=5,

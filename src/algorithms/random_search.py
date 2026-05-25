@@ -1,5 +1,6 @@
 from typing import Any, Dict, Tuple
 
+import random
 import pandas as pd
 
 from src.evaluator import evaluate_config
@@ -17,6 +18,8 @@ def run_random_search(
 
     best_score = -1.0
     best_config = None
+
+    random.seed(seed)
 
     for iteration in range(1, budget + 1):
         config = sample_config()

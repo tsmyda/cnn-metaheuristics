@@ -84,7 +84,13 @@ def repair_config(config: Dict[str, Any]) -> Dict[str, Any]:
     cfg["filters_3"] = min(filters_3_choices, key=lambda x: abs(x - int(cfg["filters_3"])))
     cfg["dense_units"] = min(dense_choices, key=lambda x: abs(x - int(cfg["dense_units"])))
     optimizer_value = cfg.get("optimizer")
-    cfg["optimizer"] = optimizer_value if optimizer_value in optimizer_choices else "adam"
+    # allow numeric optimizer encodings (e.g., PSO using indices)
+    if isinstance(optimizer_value, (int, float)):
+        idx = int(round(optimizer_value))
+        idx = max(0, min(idx, len(optimizer_choices) - 1))
+        cfg["optimizer"] = optimizer_choices[idx]
+    else:
+        cfg["optimizer"] = optimizer_value if optimizer_value in optimizer_choices else "adam"
     cfg["weight_decay"] = min(weight_decay_choices, key=lambda x: abs(x - cfg["weight_decay"]))
     cfg["use_batch_norm"] = min(use_batch_norm_choices, key=lambda x: abs(x - cfg["use_batch_norm"]))
 

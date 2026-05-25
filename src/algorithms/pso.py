@@ -18,6 +18,9 @@ BOUNDS = {
     "kernel_size": (3, 5),
     "dropout": (0.0, 0.5),
     "dense_units": (64, 256),
+    "optimizer": (0, 2),
+    "weight_decay": (1e-6, 1e-3),
+    "use_batch_norm": (0, 1),
 }
 
 KEYS = list(BOUNDS.keys())

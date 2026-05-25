@@ -22,7 +22,7 @@ def main():
 
     epochs = 5
 
-    random_budget = 5
+    random_budget = 1226
 
     print(f"Device: {device}")
     print(f"Dataset: {dataset_name}")

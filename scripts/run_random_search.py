@@ -16,7 +16,7 @@ def main():
     set_seed(7777)
 
     dataset_name = "FashionMNIST"
-    budget = 10
+    budget = 1226
     epochs = 5
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
