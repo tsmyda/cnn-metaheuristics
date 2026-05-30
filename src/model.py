@@ -2,6 +2,8 @@ import torch.nn as nn
 
 
 class BaselineCNN(nn.Module):
+    """Define a fixed CNN baseline used for manual baseline training."""
+
     def __init__(self, num_classes: int = 10):
         super().__init__()
 
@@ -12,7 +14,6 @@ class BaselineCNN(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
             nn.Dropout(0.25),
-
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
@@ -30,12 +31,15 @@ class BaselineCNN(nn.Module):
         )
 
     def forward(self, x):
+        """Run the forward pass for baseline classification."""
         x = self.features(x)
         x = self.classifier(x)
         return x
 
 
 class TunableCNN(nn.Module):
+    """Build a CNN whose depth and widths come from a sampled configuration."""
+
     def __init__(
         self,
         image_channels: int,
@@ -60,11 +64,25 @@ class TunableCNN(nn.Module):
         current_size = image_size
 
         for out_channels in filters:
-            layers.append(nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding))
+            layers.append(
+                nn.Conv2d(
+                    in_channels,
+                    out_channels,
+                    kernel_size=kernel_size,
+                    padding=padding,
+                )
+            )
             if use_batch_norm:
                 layers.append(nn.BatchNorm2d(out_channels))
             layers.append(nn.ReLU())
-            layers.append(nn.Conv2d(out_channels, out_channels, kernel_size=kernel_size, padding=padding))
+            layers.append(
+                nn.Conv2d(
+                    out_channels,
+                    out_channels,
+                    kernel_size=kernel_size,
+                    padding=padding,
+                )
+            )
             if use_batch_norm:
                 layers.append(nn.BatchNorm2d(out_channels))
             layers.append(nn.ReLU())
@@ -76,8 +94,9 @@ class TunableCNN(nn.Module):
 
         self.features = nn.Sequential(*layers)
 
+        # Pooling shrinks the spatial size once per block, so the classifier
+        # input depends on the chosen depth.
         flattened_dim = in_channels * current_size * current_size
-
         self.classifier = nn.Sequential(
             nn.Flatten(),
             nn.Linear(flattened_dim, dense_units),
@@ -87,6 +106,7 @@ class TunableCNN(nn.Module):
         )
 
     def forward(self, x):
+        """Run the forward pass for a sampled CNN architecture."""
         x = self.features(x)
         x = self.classifier(x)
         return x

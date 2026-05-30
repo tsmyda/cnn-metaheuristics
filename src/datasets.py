@@ -12,85 +12,40 @@ def get_dataset_loaders(
     num_workers: int = 2,
     seed: int = 7777,
 ) -> Tuple[DataLoader, DataLoader, DataLoader, int, int, int]:
+    """Build train, validation, and test loaders for a supported dataset."""
     dataset_name = dataset_name.lower()
+    transform = transforms.Compose([transforms.ToTensor()])
 
     if dataset_name == "fashionmnist":
-        train_transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
-        test_transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
-
-        train_full = datasets.FashionMNIST(
-            root="data",
-            train=True,
-            download=True,
-            transform=train_transform,
-        )
-        test_set = datasets.FashionMNIST(
-            root="data",
-            train=False,
-            download=True,
-            transform=test_transform,
-        )
-
+        dataset_class = datasets.FashionMNIST
         image_channels = 1
         image_size = 28
         num_classes = 10
-
     elif dataset_name == "cifar10":
-        train_transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
-        test_transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
-
-        train_full = datasets.CIFAR10(
-            root="data",
-            train=True,
-            download=True,
-            transform=train_transform,
-        )
-        test_set = datasets.CIFAR10(
-            root="data",
-            train=False,
-            download=True,
-            transform=test_transform,
-        )
-
+        dataset_class = datasets.CIFAR10
         image_channels = 3
         image_size = 32
         num_classes = 10
-
     elif dataset_name == "cifar100":
-        train_transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
-        test_transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
-
-        train_full = datasets.CIFAR100(
-            root="data",
-            train=True,
-            download=True,
-            transform=train_transform,
-        )
-        test_set = datasets.CIFAR100(
-            root="data",
-            train=False,
-            download=True,
-            transform=test_transform,
-        )
-
+        dataset_class = datasets.CIFAR100
         image_channels = 3
         image_size = 32
         num_classes = 100
-
     else:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
+
+    train_full = dataset_class(
+        root="data",
+        train=True,
+        download=True,
+        transform=transform,
+    )
+    test_set = dataset_class(
+        root="data",
+        train=False,
+        download=True,
+        transform=transform,
+    )
 
     val_size = int(len(train_full) * val_split)
     train_size = len(train_full) - val_size
@@ -124,4 +79,11 @@ def get_dataset_loaders(
         pin_memory=True,
     )
 
-    return train_loader, val_loader, test_loader, image_channels, image_size, num_classes
+    return (
+        train_loader,
+        val_loader,
+        test_loader,
+        image_channels,
+        image_size,
+        num_classes,
+    )

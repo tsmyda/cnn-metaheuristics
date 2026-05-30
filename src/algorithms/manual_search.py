@@ -70,6 +70,7 @@ def run_manual_search(
     device: str,
     seed: int = 7777,
 ) -> Tuple[Dict[str, Any] | None, pd.DataFrame]:
+    """Evaluate a fixed list of hand-picked hyperparameter configurations."""
     results = []
 
     best_score = -1.0

@@ -1,29 +1,29 @@
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 import pandas as pd
 import torch
 from InquirerPy import inquirer
 
-from src.algorithms import (
-    run_manual_search,
-    run_random_search,
-    run_ga,
-    run_pso,
-    run_aco,
-    run_harmony_search,
-)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    # Allow direct script execution without installing the package.
+    sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.algorithms import (
+    run_aco,
+    run_ga,
+    run_harmony_search,
+    run_manual_search,
+    run_pso,
+    run_random_search,
+)
 from src.plots import (
     plot_best_so_far,
-    plot_time_to_best,
     plot_hyperparam_metric_correlation_heatmaps_by_method,
+    plot_time_to_best,
 )
-from src.report_tables import save_method_summary, save_best_configs, save_time_to_best
+from src.report_tables import save_best_configs, save_method_summary, save_time_to_best
 from src.utils import ensure_dir, set_seed
 
 
@@ -43,6 +43,7 @@ def run_all_methods(
     hs_memory_size: int = 5,
     hs_iterations: int = 15,
 ) -> pd.DataFrame:
+    """Run the selected search methods and combine their result tables."""
     method_set = set(selected_methods)
     dfs: list[pd.DataFrame] = []
 
@@ -119,6 +120,7 @@ def run_all_methods(
 
 
 def prompt_selection() -> tuple[str, list[str]]:
+    """Collect the dataset and method choices from the interactive prompt."""
     dataset_name = inquirer.select(
         message="Choose dataset:",
         choices=["FashionMNIST", "CIFAR10", "CIFAR100"],
@@ -139,7 +141,9 @@ def prompt_selection() -> tuple[str, list[str]]:
 
     return dataset_name, selected_methods
 
+
 def main():
+    """Run selected methods, save result tables, and generate summary plots."""
     dataset_name, selected_methods = prompt_selection()
 
     set_seed(7777)
@@ -187,6 +191,7 @@ def main():
     )
 
     print(f"Saved results to {out_csv}")
+
 
 if __name__ == "__main__":
     main()

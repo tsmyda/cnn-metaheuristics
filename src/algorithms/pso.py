@@ -1,6 +1,6 @@
-from typing import Any, Dict, Tuple
 import copy
 import random
+from typing import Any, Dict, Tuple
 
 import pandas as pd
 
@@ -27,6 +27,7 @@ KEYS = list(BOUNDS.keys())
 
 
 def random_particle() -> Tuple[Dict[str, float], Dict[str, float]]:
+    """Initialize one particle position and velocity within the search bounds."""
     pos = {}
     vel = {}
 
@@ -38,6 +39,7 @@ def random_particle() -> Tuple[Dict[str, float], Dict[str, float]]:
 
 
 def clamp_position(pos: Dict[str, float]) -> Dict[str, float]:
+    """Clamp a particle position back into the continuous search bounds."""
     out = {}
     for key, value in pos.items():
         low, high = BOUNDS[key]
@@ -56,24 +58,20 @@ def run_pso(
     c1: float = 1.5,
     c2: float = 1.5,
 ) -> Tuple[Dict[str, Any], pd.DataFrame]:
-    """
-    PSO dla strojenia hiperparametrów CNN.
-
-    Budżet ewaluacji:
-        swarm_size * iterations
-    """
-
+    """Run particle swarm optimization for CNN hyperparameter search."""
     random.seed(seed)
 
     swarm = []
     for _ in range(swarm_size):
         pos, vel = random_particle()
-        swarm.append({
-            "pos": pos,
-            "vel": vel,
-            "best_pos": copy.deepcopy(pos),
-            "best_score": -1.0,
-        })
+        swarm.append(
+            {
+                "pos": pos,
+                "vel": vel,
+                "best_pos": copy.deepcopy(pos),
+                "best_score": -1.0,
+            }
+        )
 
     global_best_pos = None
     global_best_score = -1.0
@@ -84,7 +82,6 @@ def run_pso(
     for iteration in range(1, iterations + 1):
         for particle_idx, particle in enumerate(swarm, start=1):
             config = repair_config(particle["pos"])
-
             metrics = evaluate_config(
                 config=config,
                 dataset_name=dataset_name,
@@ -134,12 +131,13 @@ def run_pso(
                 particle["vel"][key] = w * particle["vel"][key] + cognitive + social
                 particle["pos"][key] = particle["pos"][key] + particle["vel"][key]
 
+            # Positions stay continuous during updates and are discretized later by
+            # repair_config when they are evaluated.
             particle["pos"] = clamp_position(particle["pos"])
-    
+
     if global_best_pos is None:
         raise RuntimeError("PSO finished without best position.")
 
     best_config = repair_config(global_best_pos)
     df = pd.DataFrame(results)
-
     return best_config, df

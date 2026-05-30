@@ -1,25 +1,27 @@
-from typing import Any, Dict, List, Tuple
 import copy
 import random
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
 from src.evaluator import evaluate_config
-from src.search_space import sample_config, repair_config
+from src.search_space import repair_config, sample_config
 
 
 def crossover(parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a child by choosing each hyperparameter from one parent."""
     child = {}
-    for key in parent1.keys():
+    for key in parent1:
         child[key] = random.choice([parent1[key], parent2[key]])
     return child
 
 
 def mutate(config: Dict[str, Any], mutation_prob: float = 0.2) -> Dict[str, Any]:
+    """Randomly resample selected genes and repair the child afterward."""
     child = copy.deepcopy(config)
     random_config = sample_config()
 
-    for key in child.keys():
+    for key in child:
         if random.random() < mutation_prob:
             child[key] = random_config[key]
 
@@ -30,6 +32,7 @@ def tournament_selection(
     population_with_scores: List[Tuple[Dict[str, Any], float]],
     tournament_size: int = 3,
 ) -> Dict[str, Any]:
+    """Select one parent from a random mini-tournament."""
     participants = random.sample(
         population_with_scores,
         k=min(tournament_size, len(population_with_scores)),
@@ -49,26 +52,7 @@ def run_ga(
     elite_size: int = 1,
     tournament_size: int = 3,
 ) -> Tuple[Dict[str, Any] | None, pd.DataFrame]:
-    """
-    Execute Genetic Algorithm for hyperparameter tuning of CNN.
-
-    Params:
-        dataset_name: name of the dataset to use (e.g., "FashionMNIST")
-        population_size: number of individuals in each generation
-        generations: number of generations to run
-        epochs: number of training epochs for each configuration evaluation
-        device: "cpu" or "cuda"
-        seed: random seed for reproducibility
-        mutation_prob: probability of mutating each gene in the child
-        elite_size: number of top individuals to carry over unchanged to the next generation
-        tournament_size: number of individuals competing in tournament selection
-
-    Returns:
-        best_config: the best hyperparameter configuration found
-        df: DataFrame with results of all evaluations
-    """
-
-    # make Python-random deterministic for reproducibility
+    """Run a genetic algorithm for CNN hyperparameter search."""
     random.seed(seed)
 
     population = [sample_config() for _ in range(population_size)]
@@ -81,10 +65,8 @@ def run_ga(
     for generation in range(1, generations + 1):
         population_with_scores = []
 
-        # Evaluate all individuals in the current population
         for individual_idx, individual in enumerate(population, start=1):
             config = repair_config(individual)
-
             metrics = evaluate_config(
                 config=config,
                 dataset_name=dataset_name,
@@ -105,7 +87,6 @@ def run_ga(
                 **metrics,
             }
             results.append(row)
-
             population_with_scores.append((config, score))
 
             if score > best_score:
@@ -119,17 +100,13 @@ def run_ga(
                 f"best={best_score:.4f}"
             )
 
-        # Sorting population by score for selection and elitism
         population_with_scores.sort(key=lambda x: x[1], reverse=True)
-
         elites = [
             copy.deepcopy(individual)
             for individual, _ in population_with_scores[:elite_size]
         ]
 
-        # New population
         new_population = elites[:]
-
         while len(new_population) < population_size:
             parent1 = tournament_selection(population_with_scores, tournament_size)
             parent2 = tournament_selection(population_with_scores, tournament_size)
@@ -137,7 +114,6 @@ def run_ga(
             child = crossover(parent1, parent2)
             child = mutate(child, mutation_prob=mutation_prob)
             child = repair_config(child)
-
             new_population.append(child)
 
         population = new_population[:population_size]

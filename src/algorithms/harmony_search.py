@@ -1,34 +1,39 @@
-from typing import Any, Dict, List, Tuple
 import copy
 import random
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
 from src.evaluator import evaluate_config
-from src.search_space import sample_config, repair_config
+from src.search_space import repair_config, sample_config
+
+
+RESAMPLED_KEYS = (
+    "batch_size",
+    "filters_1",
+    "filters_2",
+    "filters_3",
+    "kernel_size",
+    "dense_units",
+)
 
 
 def random_neighbor(config: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Small local modification of a configuration.
-    For categorical parameters we resample one value.
-    For continuous parameters we slightly perturb.
-    """
+    """Apply one local perturbation to a sampled configuration."""
     new_config = copy.deepcopy(config)
     key = random.choice(list(new_config.keys()))
 
+    # Continuous values are nudged, while discrete values are resampled from a
+    # fresh configuration to stay consistent with the global search space.
     if key == "learning_rate":
         factor = random.uniform(0.5, 1.5)
         new_config[key] = new_config[key] * factor
-
     elif key == "dropout":
         delta = random.uniform(-0.1, 0.1)
         new_config[key] = new_config[key] + delta
-
     elif key == "num_blocks":
         new_config[key] = new_config[key] + random.choice([-1, 1])
-
-    elif key in ["batch_size", "filters_1", "filters_2", "filters_3", "kernel_size", "dense_units"]:
+    elif key in RESAMPLED_KEYS:
         fresh = sample_config()
         new_config[key] = fresh[key]
 
@@ -40,19 +45,12 @@ def improvise_harmony(
     hmcr: float,
     par: float,
 ) -> Dict[str, Any]:
-    """
-    Create a new harmony:
-    - with probability HMCR choose values from memory
-    - otherwise sample random value
-    - with probability PAR apply small pitch adjustment
-    """
+    """Sample one harmony from memory and optional local pitch adjustment."""
     base_random = sample_config()
     new_config = {}
 
-    keys = list(base_random.keys())
-
-    for key in keys:
-        if random.random() < hmcr and len(harmony_memory) > 0:
+    for key in base_random:
+        if random.random() < hmcr and harmony_memory:
             source = random.choice(harmony_memory)
             new_config[key] = source[key]
         else:
@@ -74,12 +72,7 @@ def run_harmony_search(
     hmcr: float = 0.9,
     par: float = 0.3,
 ) -> Tuple[Dict[str, Any] | None, pd.DataFrame]:
-    """
-    Harmony Search for CNN hyperparameter tuning.
-
-    Total budget:
-        harmony_memory_size + iterations
-    """
+    """Run harmony search for CNN hyperparameter tuning."""
     random.seed(seed)
 
     results = []
@@ -91,7 +84,6 @@ def run_harmony_search(
     best_score = -1.0
     best_config = None
 
-    # Initialize harmony memory
     for idx in range(harmony_memory_size):
         config = repair_config(sample_config())
         metrics = evaluate_config(
@@ -122,18 +114,16 @@ def run_harmony_search(
             best_config = copy.deepcopy(config)
 
         print(
-            f"[HS] {idx+1:02d}/{harmony_memory_size} | "
+            f"[HS] {idx + 1:02d}/{harmony_memory_size} | "
             f"val_acc={score:.4f} | best={best_score:.4f}"
         )
 
-    # Main loop
     for it in range(1, iterations + 1):
         new_config = improvise_harmony(
             harmony_memory=harmony_memory,
             hmcr=hmcr,
             par=par,
         )
-
         metrics = evaluate_config(
             config=new_config,
             dataset_name=dataset_name,
@@ -155,8 +145,9 @@ def run_harmony_search(
         results.append(row)
 
         worst_idx = min(range(len(harmony_scores)), key=lambda i: harmony_scores[i])
-
         if score > harmony_scores[worst_idx]:
+            # Harmony memory is updated only when the new sample improves the
+            # current worst stored solution.
             harmony_memory[worst_idx] = copy.deepcopy(new_config)
             harmony_scores[worst_idx] = score
 
