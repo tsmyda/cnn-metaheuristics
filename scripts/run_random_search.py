@@ -1,18 +1,19 @@
 import sys
 from pathlib import Path
 
+import torch
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
+    # Allow direct script execution without installing the package.
     sys.path.insert(0, str(PROJECT_ROOT))
-
-import pandas as pd
-import torch
 
 from src.algorithms.random_search import run_random_search
 from src.utils import ensure_dir, set_seed
 
 
 def main():
+    """Run random search on the default dataset and save the result table."""
     set_seed(7777)
 
     dataset_name = "FashionMNIST"

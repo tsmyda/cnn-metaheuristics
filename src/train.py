@@ -10,6 +10,7 @@ def train_one_epoch(
     optimizer: torch.optim.Optimizer,
     device: str,
 ) -> Tuple[float, float]:
+    """Train the model for one epoch and return average loss and accuracy."""
     model.train()
     criterion = nn.CrossEntropyLoss()
 
@@ -43,6 +44,7 @@ def evaluate(
     loader,
     device: str,
 ) -> Tuple[float, float]:
+    """Evaluate the model on one loader and return average loss and accuracy."""
     model.eval()
     criterion = nn.CrossEntropyLoss()
 

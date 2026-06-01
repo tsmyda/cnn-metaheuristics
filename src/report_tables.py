@@ -1,15 +1,14 @@
 from pathlib import Path
 
 import pandas as pd
-import matplotlib.pyplot as plt
+
+
+METRIC_COLUMNS = ["val_accuracy", "test_accuracy", "time_sec", "num_params"]
 
 
 def save_method_summary(df: pd.DataFrame, output_path: str) -> pd.DataFrame:
-    summary = (
-        df.groupby("method")[["val_accuracy", "test_accuracy", "time_sec", "num_params"]]
-        .agg(["max", "mean", "std"])
-        .round(4)
-    )
+    """Save aggregated summary statistics for each optimization method."""
+    summary = df.groupby("method")[METRIC_COLUMNS].agg(["max", "mean", "std"]).round(4)
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     summary.to_csv(output_path)
@@ -17,6 +16,7 @@ def save_method_summary(df: pd.DataFrame, output_path: str) -> pd.DataFrame:
 
 
 def save_best_configs(df: pd.DataFrame, output_path: str) -> pd.DataFrame:
+    """Save the best validation-scoring configuration for each method."""
     idx = df.groupby("method")["val_accuracy"].idxmax()
     best_df = df.loc[idx].sort_values("val_accuracy", ascending=False).reset_index(drop=True)
 
@@ -26,6 +26,7 @@ def save_best_configs(df: pd.DataFrame, output_path: str) -> pd.DataFrame:
 
 
 def save_time_to_best(df: pd.DataFrame, output_path: str) -> pd.DataFrame:
+    """Save per-method time accumulation until the best validation result appears."""
     rows = []
 
     for method, group in df.groupby("method"):
@@ -33,14 +34,18 @@ def save_time_to_best(df: pd.DataFrame, output_path: str) -> pd.DataFrame:
         best_idx = group["val_accuracy"].idxmax()
         best_row = group.loc[best_idx]
 
-        rows.append({
-            "method": method,
-            "best_val_accuracy": best_row["val_accuracy"],
-            "test_accuracy_at_best": best_row["test_accuracy"],
-            "iteration_of_best": best_row["iteration"],
-            "time_of_best_sec": group.loc[group.index <= best_idx, "time_sec"].sum(),
-            "total_time_sec": group["time_sec"].sum(),
-        })
+        # time_sec is stored per evaluation, so the prefix sum reconstructs the
+        # elapsed wall time until the best row is reached.
+        rows.append(
+            {
+                "method": method,
+                "best_val_accuracy": best_row["val_accuracy"],
+                "test_accuracy_at_best": best_row["test_accuracy"],
+                "iteration_of_best": best_row["iteration"],
+                "time_of_best_sec": group.loc[group.index <= best_idx, "time_sec"].sum(),
+                "total_time_sec": group["time_sec"].sum(),
+            }
+        )
 
     out = pd.DataFrame(rows).sort_values("best_val_accuracy", ascending=False)
 

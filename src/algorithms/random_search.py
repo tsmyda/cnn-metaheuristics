@@ -1,6 +1,6 @@
+import random
 from typing import Any, Dict, Tuple
 
-import random
 import pandas as pd
 
 from src.evaluator import evaluate_config
@@ -14,6 +14,7 @@ def run_random_search(
     device: str,
     seed: int = 7777,
 ) -> Tuple[Dict[str, Any] | None, pd.DataFrame]:
+    """Evaluate randomly sampled configurations within a fixed budget."""
     results = []
 
     best_score = -1.0

@@ -1,7 +1,6 @@
-from typing import Any, Dict, List, Tuple
 import copy
-import math
 import random
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
@@ -19,7 +18,6 @@ DISCRETE_SPACE = {
     "dense_units": [64, 128, 256],
     "optimizer": ["adam", "sgd", "adamw"],
     "use_batch_norm": [0, 1],
-    # discretize continuous params so pheromones can guide them
     "learning_rate": [1e-4, 1e-3, 1e-2],
     "dropout": [0.0, 0.1, 0.25, 0.4, 0.5],
     "weight_decay": [1e-6, 1e-5, 1e-4, 1e-3],
@@ -27,6 +25,7 @@ DISCRETE_SPACE = {
 
 
 def init_pheromones() -> Dict[str, Dict[Any, float]]:
+    """Initialize a uniform pheromone table for each discrete choice."""
     pheromones = {}
     for key, values in DISCRETE_SPACE.items():
         pheromones[key] = {value: 1.0 for value in values}
@@ -34,6 +33,7 @@ def init_pheromones() -> Dict[str, Dict[Any, float]]:
 
 
 def sample_from_pheromones(prob_dict: Dict[Any, float]) -> Any:
+    """Sample one value using the current pheromone weights."""
     values = list(prob_dict.keys())
     weights = list(prob_dict.values())
     return random.choices(values, weights=weights, k=1)[0]
@@ -42,6 +42,7 @@ def sample_from_pheromones(prob_dict: Dict[Any, float]) -> Any:
 def construct_solution(
     pheromones: Dict[str, Dict[Any, float]],
 ) -> Dict[str, Any]:
+    """Construct one candidate solution from the pheromone tables."""
     config = {}
     for key in DISCRETE_SPACE:
         config[key] = sample_from_pheromones(pheromones[key])
@@ -53,9 +54,10 @@ def evaporate(
     pheromones: Dict[str, Dict[Any, float]],
     evaporation_rate: float,
 ) -> None:
+    """Decay pheromone mass while keeping a small positive floor."""
     for key in pheromones:
         for value in pheromones[key]:
-            pheromones[key][value] *= (1.0 - evaporation_rate)
+            pheromones[key][value] *= 1.0 - evaporation_rate
             pheromones[key][value] = max(pheromones[key][value], 1e-6)
 
 
@@ -65,6 +67,7 @@ def deposit(
     score: float,
     q: float,
 ) -> None:
+    """Reinforce choices used by a high-scoring configuration."""
     for key in DISCRETE_SPACE:
         pheromones[key][config[key]] += q * score
 
@@ -80,12 +83,7 @@ def run_aco(
     q: float = 1.0,
     top_k_deposit: int = 2,
 ) -> Tuple[Dict[str, Any] | None, pd.DataFrame]:
-    """
-    Ant Colony Optimization for CNN hyperparameter tuning.
-
-    Total budget:
-        ants * iterations
-    """
+    """Run ant colony optimization for CNN hyperparameter search."""
     random.seed(seed)
 
     pheromones = init_pheromones()
@@ -100,7 +98,6 @@ def run_aco(
 
         for ant_idx in range(1, ants + 1):
             config = construct_solution(pheromones)
-
             metrics = evaluate_config(
                 config=config,
                 dataset_name=dataset_name,
@@ -135,6 +132,7 @@ def run_aco(
 
         evaporate(pheromones, evaporation_rate)
 
+        # Only the top solutions in each iteration reinforce the trail.
         iter_solutions.sort(key=lambda x: x[1], reverse=True)
         for config, score in iter_solutions[:top_k_deposit]:
             deposit(pheromones, config, score, q=q)

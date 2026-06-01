@@ -1,12 +1,13 @@
 import sys
 from pathlib import Path
 
+import pandas as pd
+import torch
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
+    # Allow direct script execution without installing the package.
     sys.path.insert(0, str(PROJECT_ROOT))
-
-import torch
-import pandas as pd
 
 from src.algorithms.manual_search import run_manual_search
 from src.algorithms.random_search import run_random_search
@@ -15,13 +16,12 @@ from src.utils import ensure_dir, set_seed
 
 
 def main():
+    """Compare manual search against random search on the default dataset."""
     set_seed(7777)
 
     dataset_name = "FashionMNIST"
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
     epochs = 5
-
     random_budget = 1226
 
     print(f"Device: {device}")
@@ -39,7 +39,6 @@ def main():
         device=device,
         seed=7777,
     )
-
     best_random, df_random = run_random_search(
         dataset_name=dataset_name,
         budget=random_budget,

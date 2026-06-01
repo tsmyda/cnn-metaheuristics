@@ -20,6 +20,7 @@ SEARCH_SPACE = {
 
 
 def sample_config() -> Dict[str, Any]:
+    """Sample one hyperparameter configuration from the search space."""
     config = {}
 
     for name, spec in SEARCH_SPACE.items():
@@ -28,19 +29,15 @@ def sample_config() -> Dict[str, Any]:
         if kind == "int":
             _, low, high = spec
             config[name] = random.randint(low, high)
-
         elif kind == "float":
             _, low, high = spec
             config[name] = random.uniform(low, high)
-
         elif kind == "log_float":
             _, low, high = spec
             config[name] = 10 ** random.uniform(math.log10(low), math.log10(high))
-
         elif kind == "categorical":
             _, values = spec
             config[name] = random.choice(values)
-
         else:
             raise ValueError(f"Unknown search space kind: {kind}")
 
@@ -48,6 +45,7 @@ def sample_config() -> Dict[str, Any]:
 
 
 def repair_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Clamp and normalize a configuration to the supported parameter values."""
     cfg = dict(config)
 
     cfg.setdefault("learning_rate", 1e-3)
@@ -77,22 +75,32 @@ def repair_config(config: Dict[str, Any]) -> Dict[str, Any]:
     weight_decay_choices = [1e-6, 1e-5, 1e-4, 1e-3]
     use_batch_norm_choices = [0, 1]
 
+    # Continuous or index-like proposals from optimizers such as PSO are snapped
+    # back to the nearest valid discrete option here.
     cfg["batch_size"] = min(batch_choices, key=lambda x: abs(x - int(cfg["batch_size"])))
     cfg["kernel_size"] = min(kernel_choices, key=lambda x: abs(x - int(cfg["kernel_size"])))
     cfg["filters_1"] = min(filters_1_choices, key=lambda x: abs(x - int(cfg["filters_1"])))
     cfg["filters_2"] = min(filters_2_choices, key=lambda x: abs(x - int(cfg["filters_2"])))
     cfg["filters_3"] = min(filters_3_choices, key=lambda x: abs(x - int(cfg["filters_3"])))
     cfg["dense_units"] = min(dense_choices, key=lambda x: abs(x - int(cfg["dense_units"])))
+
     optimizer_value = cfg.get("optimizer")
-    # allow numeric optimizer encodings (e.g., PSO using indices)
     if isinstance(optimizer_value, (int, float)):
         idx = int(round(optimizer_value))
         idx = max(0, min(idx, len(optimizer_choices) - 1))
         cfg["optimizer"] = optimizer_choices[idx]
     else:
-        cfg["optimizer"] = optimizer_value if optimizer_value in optimizer_choices else "adam"
-    cfg["weight_decay"] = min(weight_decay_choices, key=lambda x: abs(x - cfg["weight_decay"]))
-    cfg["use_batch_norm"] = min(use_batch_norm_choices, key=lambda x: abs(x - cfg["use_batch_norm"]))
+        cfg["optimizer"] = (
+            optimizer_value if optimizer_value in optimizer_choices else "adam"
+        )
 
+    cfg["weight_decay"] = min(
+        weight_decay_choices,
+        key=lambda x: abs(x - cfg["weight_decay"]),
+    )
+    cfg["use_batch_norm"] = min(
+        use_batch_norm_choices,
+        key=lambda x: abs(x - cfg["use_batch_norm"]),
+    )
 
     return cfg

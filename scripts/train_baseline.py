@@ -1,19 +1,21 @@
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 import torch
 from torch.optim import Adam
 
-from src.datasets import get_fashion_mnist_loaders
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    # Allow direct script execution without installing the package.
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.datasets import get_dataset_loaders
 from src.model import BaselineCNN
-from src.train import train_one_epoch, evaluate
+from src.train import evaluate, train_one_epoch
 
 
 def main():
+    """Train the baseline CNN on FashionMNIST and save the best checkpoint."""
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
 
@@ -21,8 +23,9 @@ def main():
     learning_rate = 1e-3
     epochs = 10
 
-    train_loader, val_loader, test_loader = get_fashion_mnist_loaders(
-        batch_size=batch_size
+    train_loader, val_loader, test_loader, _, _, _ = get_dataset_loaders(
+        dataset_name="FashionMNIST",
+        batch_size=batch_size,
     )
 
     model = BaselineCNN().to(device)

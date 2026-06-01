@@ -1,10 +1,26 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import pandas as pd
+from matplotlib.ticker import MaxNLocator
+
+
+HYPERPARAM_COLUMNS = [
+    "learning_rate",
+    "batch_size",
+    "num_blocks",
+    "filters_1",
+    "filters_2",
+    "filters_3",
+    "kernel_size",
+    "dropout",
+    "dense_units",
+]
+METRIC_COLUMNS = ["val_accuracy", "test_accuracy", "time_sec", "num_params"]
+
 
 def plot_best_so_far(csv_path: str, output_path: str) -> None:
+    """Plot the best validation accuracy reached after each evaluation."""
     df = pd.read_csv(csv_path)
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -34,8 +50,9 @@ def plot_best_so_far(csv_path: str, output_path: str) -> None:
     plt.savefig(output_path, dpi=200)
     plt.close()
 
-def plot_time_to_best(df: pd.DataFrame, output_path: str) -> None:
 
+def plot_time_to_best(df: pd.DataFrame, output_path: str) -> None:
+    """Plot the elapsed time until each method finds its best validation score."""
     plt.figure(figsize=(10, 6))
     plt.bar(df["method"], df["time_of_best_sec"], color="skyblue")
     plt.xlabel("Method")
@@ -46,11 +63,12 @@ def plot_time_to_best(df: pd.DataFrame, output_path: str) -> None:
     plt.savefig(output_path)
     plt.close()
 
+
 def plot_time_to_best_combined(
     dataset_to_df: dict[str, pd.DataFrame],
     output_path: str,
 ) -> None:
-
+    """Compare time-to-best charts across multiple datasets."""
     method_order = [
         "manual_search",
         "random_search",
@@ -59,7 +77,6 @@ def plot_time_to_best_combined(
         "aco",
         "harmony_search",
     ]
-
     pretty_names = {
         "manual_search": "Manual",
         "random_search": "Random",
@@ -70,14 +87,18 @@ def plot_time_to_best_combined(
     }
 
     n_datasets = len(dataset_to_df)
-    fig, axes = plt.subplots(1, n_datasets, figsize=(5 * n_datasets, 4), sharey=True)
+    fig, axes = plt.subplots(
+        1,
+        n_datasets,
+        figsize=(5 * n_datasets, 4),
+        sharey=True,
+    )
 
     if n_datasets == 1:
         axes = [axes]
 
     for ax, (dataset_name, df) in zip(axes, dataset_to_df.items()):
         plot_df = df.copy()
-
         plot_df["method"] = pd.Categorical(
             plot_df["method"],
             categories=method_order,
@@ -85,7 +106,7 @@ def plot_time_to_best_combined(
         )
         plot_df = plot_df.sort_values("method")
 
-        x_labels = [pretty_names[m] for m in plot_df["method"]]
+        x_labels = [pretty_names[method] for method in plot_df["method"]]
         y_values = plot_df["time_of_best_sec"]
 
         ax.bar(x_labels, y_values)
@@ -95,19 +116,24 @@ def plot_time_to_best_combined(
 
     axes[0].set_ylabel("Czas do najlepszego wyniku [s]")
 
-    fig.suptitle("Czas do osiągnięcia najlepszej dokładności walidacyjnej", fontsize=12)
+    fig.suptitle(
+        "Czas do osiągnięcia najlepszej dokładności walidacyjnej",
+        fontsize=12,
+    )
     plt.tight_layout()
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=200, bbox_inches="tight")
     plt.close()
-    
+
+
 def plot_hparam_vs_accuracy(
     csv_path: str,
     param_name: str,
     output_path: str,
     log_x: bool = False,
 ) -> None:
+    """Plot validation accuracy against one selected hyperparameter."""
     df = pd.read_csv(csv_path)
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -130,21 +156,9 @@ def plot_hyperparam_metric_correlation_heatmap(
     df: pd.DataFrame,
     output_path: str,
 ) -> None:
-    hyperparams = [
-        "learning_rate",
-        "batch_size",
-        "num_blocks",
-        "filters_1",
-        "filters_2",
-        "filters_3",
-        "kernel_size",
-        "dropout",
-        "dense_units",
-    ]
-    metrics = ["val_accuracy", "test_accuracy", "time_sec", "num_params"]
-
-    available_hparams = [col for col in hyperparams if col in df.columns]
-    available_metrics = [col for col in metrics if col in df.columns]
+    """Plot one correlation heatmap between hyperparameters and result metrics."""
+    available_hparams = [col for col in HYPERPARAM_COLUMNS if col in df.columns]
+    available_metrics = [col for col in METRIC_COLUMNS if col in df.columns]
 
     if not available_hparams or not available_metrics:
         return
@@ -155,16 +169,34 @@ def plot_hyperparam_metric_correlation_heatmap(
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
     plt.figure(figsize=(9, 6))
-    im = plt.imshow(corr_block.values, cmap="coolwarm", vmin=-1, vmax=1, aspect="auto")
+    im = plt.imshow(
+        corr_block.values,
+        cmap="coolwarm",
+        vmin=-1,
+        vmax=1,
+        aspect="auto",
+    )
 
-    plt.xticks(range(len(available_metrics)), available_metrics, rotation=30, ha="right")
+    plt.xticks(
+        range(len(available_metrics)),
+        available_metrics,
+        rotation=30,
+        ha="right",
+    )
     plt.yticks(range(len(available_hparams)), available_hparams)
     plt.title("Hyperparameter Correlation with Result Metrics")
 
     for row_idx in range(corr_block.shape[0]):
         for col_idx in range(corr_block.shape[1]):
             value = corr_block.iat[row_idx, col_idx]
-            plt.text(col_idx, row_idx, f"{value:.2f}", ha="center", va="center", fontsize=8)
+            plt.text(
+                col_idx,
+                row_idx,
+                f"{value:.2f}",
+                ha="center",
+                va="center",
+                fontsize=8,
+            )
 
     cbar = plt.colorbar(im)
     cbar.set_label("Pearson correlation")
@@ -178,27 +210,15 @@ def plot_hyperparam_metric_correlation_heatmaps_by_method(
     df: pd.DataFrame,
     output_dir: str,
 ) -> None:
+    """Plot one correlation heatmap per optimization method."""
     if "method" not in df.columns:
         return
-
-    hyperparams = [
-        "learning_rate",
-        "batch_size",
-        "num_blocks",
-        "filters_1",
-        "filters_2",
-        "filters_3",
-        "kernel_size",
-        "dropout",
-        "dense_units",
-    ]
-    metrics = ["val_accuracy", "test_accuracy", "time_sec", "num_params"]
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     for method, group in df.groupby("method"):
-        available_hparams = [col for col in hyperparams if col in group.columns]
-        available_metrics = [col for col in metrics if col in group.columns]
+        available_hparams = [col for col in HYPERPARAM_COLUMNS if col in group.columns]
+        available_metrics = [col for col in METRIC_COLUMNS if col in group.columns]
 
         if not available_hparams or not available_metrics:
             continue
@@ -211,16 +231,34 @@ def plot_hyperparam_metric_correlation_heatmaps_by_method(
         corr_block = corr.loc[available_hparams, available_metrics]
 
         plt.figure(figsize=(9, 6))
-        im = plt.imshow(corr_block.values, cmap="coolwarm", vmin=-1, vmax=1, aspect="auto")
+        im = plt.imshow(
+            corr_block.values,
+            cmap="coolwarm",
+            vmin=-1,
+            vmax=1,
+            aspect="auto",
+        )
 
-        plt.xticks(range(len(available_metrics)), available_metrics, rotation=30, ha="right")
+        plt.xticks(
+            range(len(available_metrics)),
+            available_metrics,
+            rotation=30,
+            ha="right",
+        )
         plt.yticks(range(len(available_hparams)), available_hparams)
         plt.title(f"Hyperparameter Correlation with Metrics - {method}")
 
         for row_idx in range(corr_block.shape[0]):
             for col_idx in range(corr_block.shape[1]):
                 value = corr_block.iat[row_idx, col_idx]
-                plt.text(col_idx, row_idx, f"{value:.2f}", ha="center", va="center", fontsize=8)
+                plt.text(
+                    col_idx,
+                    row_idx,
+                    f"{value:.2f}",
+                    ha="center",
+                    va="center",
+                    fontsize=8,
+                )
 
         cbar = plt.colorbar(im)
         cbar.set_label("Pearson correlation")
@@ -232,10 +270,11 @@ def plot_hyperparam_metric_correlation_heatmaps_by_method(
 
 
 def save_summary_table(csv_path: str, output_path: str) -> None:
+    """Aggregate method-level summary statistics and save them to CSV."""
     df = pd.read_csv(csv_path)
 
     summary = (
-        df.groupby("method")[["val_accuracy", "test_accuracy", "time_sec", "num_params"]]
+        df.groupby("method")[METRIC_COLUMNS]
         .agg(["max", "mean"])
         .round(4)
     )
